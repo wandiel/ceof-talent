@@ -1,0 +1,17 @@
+# Segredos e configuração local
+.env
+.env.*
+!.env.example
+!backend/.env.testing
+
+# Backups e certificados nunca são versionados
+backups/*
+!backups/.gitkeep
+docker/nginx/certs/*.pem
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
