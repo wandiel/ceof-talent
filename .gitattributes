@@ -1,0 +1,9 @@
+# Scripts e configurações executados dentro dos containers Linux precisam de
+# finais de linha LF, mesmo quando o repositório é clonado no Windows.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
