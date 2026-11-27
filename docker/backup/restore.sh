@@ -38,7 +38,16 @@ if [ "$do_db" = "yes" ]; then
              --dbname="$PGDATABASE" "$dir/database.dump"
 fi
 
-if [ "$do_files" = "yes" ]; then
+if [ "$do_files" = "yes" ] && documents_in_bucket; then
+  log "Restaurando documentos no bucket $AWS_BUCKET"
+  work="$(mktemp -d)"
+  tar -xzf "$dir/storage.tar.gz" -C "$work"
+  mkdir -p "$work/private"
+  # Espelha os documentos do backup (pasta private/) no bucket, removendo objetos
+  # que não existiam no backup. Backups do disco local também servem (migração).
+  rclone sync "$work/private" "$(docs_remote)" --exclude '.health/**' || { rm -rf "$work"; die "Falha ao restaurar os documentos no bucket"; }
+  rm -rf "$work"
+elif [ "$do_files" = "yes" ]; then
   [ -w "$STORAGE_DIR" ] || die "$STORAGE_DIR não está gravável (use o serviço 'restore')"
   log "Restaurando documentos em $STORAGE_DIR"
   find "$STORAGE_DIR" -mindepth 1 -delete

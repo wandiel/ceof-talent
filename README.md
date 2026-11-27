@@ -66,6 +66,18 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | [09 — Portal público](docs/09-portal-publico.md) | Trabalhe conosco, candidatura, cadastro espontâneo, protocolo, aviso de privacidade |
 | [10 — LGPD e auditoria](docs/10-lgpd-auditoria.md) | direitos do titular, consentimentos, anonimização, retenção, trilha de auditoria |
 | [11 — Testes e homologação](docs/11-testes-homologacao.md) | roteiro de homologação, testes de segurança, testes de interface, roteiro manual |
+| [12 — Documentação e nuvem](docs/12-documentacao-nuvem.md) | documentos em S3, cópia externa dos backups, atualização segura, OpenAPI |
+
+### Manuais
+
+| Manual | Para quem |
+|---|---|
+| [Manual do usuário](docs/manuais/manual-do-usuario.md) | RH, gestores e entrevistadores |
+| [Manual do administrador](docs/manuais/manual-do-administrador.md) | administrador do sistema e TI |
+| [Backup e restauração](docs/manuais/backup-e-restauracao.md) | TI |
+| [Atualização de versão](docs/manuais/atualizacao.md) | TI |
+| [Implantação em servidor/nuvem](docs/manuais/implantacao-na-nuvem.md) | TI |
+| [API (OpenAPI)](docs/api/README.md) | integrações |
 
 ## Status
 
@@ -82,4 +94,4 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | 9. Portal público (Trabalhe conosco) | ✅ |
 | 10. LGPD e auditoria | ✅ |
 | 11. Testes e homologação | ✅ |
-| 12. Documentação e nuvem | próxima |
+| 12. Documentação e nuvem | ✅ |

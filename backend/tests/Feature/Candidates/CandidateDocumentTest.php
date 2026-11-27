@@ -21,7 +21,7 @@ class CandidateDocumentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake(CandidateDocument::DISK);
+        Storage::fake(CandidateDocument::diskName());
         $this->candidate = Candidate::factory()->create();
     }
 
@@ -66,7 +66,7 @@ class CandidateDocumentTest extends TestCase
         $document = CandidateDocument::query()->where('uuid', $id)->firstOrFail();
         $this->assertStringStartsWith('candidates/'.$this->candidate->uuid.'/', $document->path);
         $this->assertStringNotContainsString('Maria', $document->path);
-        Storage::disk(CandidateDocument::DISK)->assertExists($document->path);
+        Storage::disk(CandidateDocument::diskName())->assertExists($document->path);
 
         $download = $this->get("/api/v1/candidates/{$this->candidate->uuid}/documents/{$id}")->assertOk();
         $this->assertStringContainsString('attachment', (string) $download->headers->get('Content-Disposition'));
@@ -75,7 +75,7 @@ class CandidateDocumentTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['event' => 'candidate.document_downloaded']);
 
         $this->deleteJson("/api/v1/candidates/{$this->candidate->uuid}/documents/{$id}")->assertNoContent();
-        Storage::disk(CandidateDocument::DISK)->assertMissing($document->path);
+        Storage::disk(CandidateDocument::diskName())->assertMissing($document->path);
         $this->assertDatabaseHas('audit_logs', ['event' => 'candidate.document_deleted']);
     }
 
@@ -109,7 +109,7 @@ class CandidateDocumentTest extends TestCase
             ->assertUnprocessable()->assertJsonPath('errors.file.0', 'O arquivo deve ter no máximo 10 MB.');
 
         $this->assertSame(0, CandidateDocument::query()->count());
-        $this->assertSame([], Storage::disk(CandidateDocument::DISK)->allFiles());
+        $this->assertSame([], Storage::disk(CandidateDocument::diskName())->allFiles());
     }
 
     public function test_same_file_cannot_be_attached_twice(): void
@@ -133,7 +133,7 @@ class CandidateDocumentTest extends TestCase
     private function storedDocument(): CandidateDocument
     {
         $path = 'candidates/'.$this->candidate->uuid.'/arquivo.pdf';
-        Storage::disk(CandidateDocument::DISK)->put($path, '%PDF-1.4');
+        Storage::disk(CandidateDocument::diskName())->put($path, '%PDF-1.4');
 
         return $this->candidate->documents()->create([
             'type' => 'resume', 'original_name' => 'cv.pdf', 'path' => $path,

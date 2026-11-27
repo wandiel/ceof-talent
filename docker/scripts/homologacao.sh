@@ -191,8 +191,8 @@ else
 fi
 missing="$("${compose[@]}" exec -T app php -r '
 require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-$disk = Illuminate\Support\Facades\Storage::disk(App\Models\CandidateDocument::DISK); $m = 0;
-foreach (App\Models\CandidateDocument::query()->cursor() as $d) { if (! $disk->exists($d->path) || hash_file("sha256", $disk->path($d->path)) !== trim($d->sha256)) $m++; } echo $m;' 2>/dev/null | tr -d '\r')"
+$disk = App\Models\CandidateDocument::storage(); $m = 0;
+foreach (App\Models\CandidateDocument::query()->cursor() as $d) { if (! $disk->exists($d->path) || hash("sha256", (string) $disk->get($d->path)) !== trim($d->sha256)) $m++; } echo $m;' 2>/dev/null | tr -d '\r')"
 [ "$missing" = "0" ] && pass "Todos os documentos existem no disco e o conteúdo confere (SHA-256)" || fail "Documentos ausentes ou alterados no disco: ${missing:-erro ao verificar}"
 
 # ---------------------------------------------------------------------------

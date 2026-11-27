@@ -16,6 +16,12 @@ return [
     'default' => env('FILESYSTEM_DISK', 'local'),
 
     /*
+    | Disco dos currículos e documentos dos candidatos: "local" (volume privado
+    | do servidor) ou "s3" (bucket compatível com S3: AWS, MinIO, Wasabi...).
+    */
+    'documents' => env('FILESYSTEM_DISK', 'local') === 's3' ? 's3' : 'local',
+
+    /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
@@ -56,7 +62,9 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
+            'visibility' => 'private',
+            // Falhas de gravação no bucket precisam aparecer (não podem sumir em silêncio).
+            'throw' => true,
             'report' => false,
         ],
 

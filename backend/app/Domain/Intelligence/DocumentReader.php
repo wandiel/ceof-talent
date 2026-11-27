@@ -10,7 +10,6 @@ use App\Domain\Intelligence\Enums\SuggestionStatus;
 use App\Models\CandidateDocument;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Lê um documento anexado, guarda o texto (para a busca por palavras-chave) e
@@ -45,7 +44,7 @@ class DocumentReader
         }
 
         try {
-            $extracted = $this->extractor->extract(Storage::disk(CandidateDocument::DISK)->path($document->path), $document->mime_type);
+            $extracted = $this->withLocalFile($document, fn (string $file) => $this->extractor->extract($file, $document->mime_type));
         } catch (\Throwable $e) {
             Log::warning('Falha ao ler documento', ['document' => $document->uuid, 'error' => $e->getMessage()]);
             $this->finish($document, self::STATUS_FAILED, null, null);
@@ -91,5 +90,35 @@ class DocumentReader
             'extracted_text' => $text,
             'extracted_at' => now(),
         ])->save();
+    }
+
+    /**
+     * Os extratores precisam de um arquivo local. No disco "local" usa o próprio
+     * arquivo; em S3 baixa uma cópia temporária, apagada logo depois.
+     *
+     * @template T
+     *
+     * @param  callable(string): T  $callback
+     * @return T
+     */
+    private function withLocalFile(CandidateDocument $document, callable $callback): mixed
+    {
+        $disk = CandidateDocument::storage();
+        if (CandidateDocument::diskName() === 'local') {
+            return $callback($disk->path($document->path));
+        }
+
+        $tmp = tempnam(sys_get_temp_dir(), 'ceof-doc-');
+        try {
+            $in = $disk->readStream($document->path) ?: throw new \RuntimeException('Arquivo não encontrado no armazenamento.');
+            $out = fopen($tmp, 'wb');
+            stream_copy_to_stream($in, $out);
+            fclose($out);
+            is_resource($in) && fclose($in);
+
+            return $callback($tmp);
+        } finally {
+            @unlink($tmp);
+        }
     }
 }

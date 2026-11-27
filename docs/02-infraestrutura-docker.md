@@ -166,7 +166,9 @@ Todo backup é verificado logo após ser gerado; um backup inválido não é pub
 Os backups ficam em um diretório do host (`BACKUP_HOST_DIR`), independente dos containers.
 Para cópia externa automática, crie o script executável `BACKUP_HOST_DIR/hooks/post-backup.sh`;
 ele recebe o caminho do backup recém-criado. Alternativamente, sincronize o diretório a partir
-do host (cron + `rclone sync`, `aws s3 sync`, etc.). A Fase 12 entrega a integração S3 nativa.
+do host (cron + `rclone sync`, `aws s3 sync`, etc.). Desde a Fase 12 há integração S3 nativa
+(`BACKUP_S3_*`, comandos `list-backups --remote` e `fetch-backup`): ver
+[manuais/backup-e-restauracao.md](manuais/backup-e-restauracao.md).
 
 ### 4.4 Restauração
 
