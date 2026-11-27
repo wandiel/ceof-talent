@@ -37,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
 
         // API autenticada: limite por usuário (ou IP, se anônimo).
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(300)->by($request->user()?->id ?: $request->ip()));
+        // Portal público: poucos envios por IP (o formulário tem arquivos).
+        RateLimiter::for('portal', fn (Request $request) => [
+            Limit::perMinute(10)->by('portal-m:'.$request->ip()),
+            Limit::perDay(60)->by('portal-d:'.$request->ip()),
+        ]);
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)->by('uploads:'.($request->user()?->id ?: $request->ip())));
     }
 }

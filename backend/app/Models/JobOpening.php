@@ -64,6 +64,14 @@ class JobOpening extends Model
         $query->where('job_openings.department_id', $user->department_id ?? 0);
     }
 
+    /** Vagas que aparecem no portal: publicadas, públicas e com inscrições abertas. */
+    public function scopePubliclyOpen(Builder $query): void
+    {
+        $query->where('job_openings.status', JobStatus::Published->value)
+            ->where('job_openings.is_public', true)
+            ->where(fn (Builder $q) => $q->whereNull('job_openings.closes_on')->orWhere('job_openings.closes_on', '>=', now()->toDateString()));
+    }
+
     /** RH (gestão de vagas ou acesso a todos os candidatos) trabalha com qualquer departamento. */
     public static function seesAllDepartments(User $user): bool
     {

@@ -63,5 +63,9 @@ async function submit() {
     </div>
 
     <BaseButton type="submit" class="w-full" :loading="loading">Entrar</BaseButton>
+
+    <p class="border-t border-slate-200 pt-4 text-center text-sm text-slate-500">
+      Quer trabalhar no CEOF? <RouterLink to="/trabalhe-conosco" class="font-medium text-brand-700 hover:text-brand-800">Veja as vagas abertas</RouterLink>
+    </p>
   </form>
 </template>

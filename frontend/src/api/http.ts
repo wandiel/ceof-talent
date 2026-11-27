@@ -78,6 +78,7 @@ export function parseApiError(error: unknown): ApiError {
     if (status === null) message = 'Sem conexão com o servidor. Verifique sua rede e tente novamente.'
     else if (status === 403) message = data?.message && data.message !== 'This action is unauthorized.' ? data.message : 'Você não tem permissão para esta ação.'
     else if (status === 404) message = 'Registro não encontrado.'
+    else if (status === 429 && !Object.keys(fields).length) message = 'Muitas tentativas em pouco tempo. Aguarde um minuto e tente novamente.'
     else if (status === 422 || status === 409 || status === 429) message = Object.values(fields)[0] ?? message
     else if (status >= 500) message = 'Erro interno do servidor. Tente novamente em instantes.'
 

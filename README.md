@@ -62,6 +62,7 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | [06 — Vagas e processos seletivos](docs/06-vagas-processos-seletivos.md) | ciclo e aprovação da vaga, quadro Kanban, regras de movimentação, API |
 | [07 — Entrevistas, avaliações e IA](docs/07-entrevistas-avaliacoes-ia.md) | agenda, pareceres por critérios, lembretes, leitura de currículo, sugestões e aderência |
 | [08 — Dashboard e relatórios](docs/08-dashboard-relatorios.md) | indicadores, gráficos, 14 relatórios, exportação PDF/XLSX/CSV, dados de demonstração |
+| [09 — Portal público](docs/09-portal-publico.md) | Trabalhe conosco, candidatura, cadastro espontâneo, protocolo, aviso de privacidade |
 
 ## Status
 
@@ -75,5 +76,6 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | 6. Vagas e processos seletivos | ✅ |
 | 7. Entrevistas, avaliações e leitura de currículos | ✅ |
 | 8. Dashboard e relatórios | ✅ |
-| 9. Portal público | próxima |
-| 10–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
+| 9. Portal público (Trabalhe conosco) | ✅ |
+| 10. LGPD e auditoria | próxima |
+| 11–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
