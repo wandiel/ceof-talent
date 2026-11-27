@@ -246,6 +246,27 @@ services:
       database: { condition: service_healthy }
     networks: [internal]
 
+  # Testes de interface (Fase 11). Sob demanda, não sobe com "up". Uso:
+  #   docker compose --profile tests run --rm e2e
+  # Cria dados próprios (prefixo "E2E"); use em desenvolvimento ou homologação.
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.63.0-noble
+    profiles: ["tests"]
+    working_dir: /e2e
+    environment:
+      APP_PORT: ${APP_PORT:-8080}
+      E2E_BASE_URL: http://localhost:${APP_PORT:-8080}
+      E2E_EMAIL: ${E2E_EMAIL:-admin@ceof.test}
+      E2E_PASSWORD: ${E2E_PASSWORD:-}
+      CI: "1"
+    entrypoint: ["sh", "-c", "npm ci --no-audit --no-fund --loglevel=error && (node proxy.mjs &) && sleep 1 && npx playwright test \"$$@\"", "--"]
+    volumes:
+      - ./e2e:/e2e
+      - e2e_node_modules:/e2e/node_modules
+    depends_on:
+      nginx: { condition: service_healthy }
+    networks: [edge]
+
 networks:
   # edge: tráfego HTTP (nginx <-> frontend/app)
   edge: {}
@@ -257,3 +278,4 @@ volumes:
   postgres_data:
   redis_data:
   frontend_node_modules:
+  e2e_node_modules:

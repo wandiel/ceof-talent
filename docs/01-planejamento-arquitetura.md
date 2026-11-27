@@ -293,8 +293,8 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
 | 8 | Dashboard e relatórios | ✅ concluída | indicadores reais, exportação PDF/XLSX/CSV |
 | 9 | Portal público | ✅ concluída | trabalhe conosco, candidatura, consentimento, confirmação |
 | 10 | LGPD e auditoria | ✅ concluída | retenção, direitos do titular, trilha de auditoria completa |
-| 11 | Testes e homologação | ⏳ próxima | suíte completa aprovada, testes de segurança e de restauração |
-| 12 | Documentação e nuvem | pendente | manuais, OpenAPI, implantação em VPS/cloud, backup externo S3 |
+| 11 | Testes e homologação | ✅ concluída | suíte completa aprovada, testes de segurança e de restauração |
+| 12 | Documentação e nuvem | ⏳ próxima | manuais, OpenAPI, implantação em VPS/cloud, backup externo S3 |
 
 ## 12. Estratégia de testes
 
@@ -302,7 +302,9 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
   `ceof_talent_test`, criado automaticamente pelo container do banco. O `phpunit.xml` força as
   variáveis de teste para impedir qualquer execução contra o banco principal.
 - **API, autenticação, permissões, uploads e processos**: testes de feature por módulo.
-- **Frontend**: checagem de tipos (`vue-tsc`) no build e validação das telas no navegador a cada fase; suíte automatizada de testes de interface na Fase 11.
+- **Frontend**: checagem de tipos (`vue-tsc`) no build e validação das telas no navegador a cada fase; suíte automatizada de testes de interface (Playwright, pasta `e2e/`) desde a Fase 11.
+- **Segurança**: `tests/Feature/Security` percorre todas as rotas da API e cobre injeção, escalada de privilégio, vazamento de dados e atribuição em massa.
+- **Homologação**: `docker/scripts/homologacao.sh` executa tudo e grava um relatório.
 - **Infraestrutura**: `docker/scripts/test-infrastructure.sh` valida subida, recriação dos
   containers sem perda, backup, restauração, isolamento de rede e execução sem root.
 
