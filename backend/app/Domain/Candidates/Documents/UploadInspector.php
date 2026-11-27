@@ -11,7 +11,8 @@ use ZipArchive;
  *
  * - O tipo MIME é detectado pelo conteúdo (fileinfo) e precisa corresponder à extensão.
  * - DOCX precisa ser um pacote Word válido e não pode conter macros.
- * - PDF não pode conter JavaScript, ações de execução automática nem arquivos anexados.
+ * - PDF não pode conter JavaScript, ações de execução automática nem arquivos anexados
+ *   (exceto o selo de procedência C2PA, que é só metadado).
  */
 class UploadInspector
 {
@@ -91,9 +92,35 @@ class UploadInspector
         if (preg_match('#/(JavaScript|JS|Launch)(?![A-Za-z0-9])#', $scan)) {
             $this->fail($field, 'O PDF contém scripts ou ações automáticas e foi bloqueado. Salve o currículo novamente como PDF (por exemplo, em "Imprimir > Salvar como PDF") e envie de novo.');
         }
-        if (preg_match('#/EmbeddedFiles?(?![A-Za-z0-9])#', $scan)) {
+        if ($this->hasEmbeddedFiles($scan)) {
             $this->fail($field, 'O PDF contém outros arquivos anexados dentro dele e foi bloqueado. Salve o currículo novamente como PDF (por exemplo, em "Imprimir > Salvar como PDF") e envie de novo.');
         }
+    }
+
+    /**
+     * Arquivos anexados dentro do PDF. O único tipo aceito é o selo de procedência
+     * "Content Credentials" (C2PA, application/c2pa), que editores e ferramentas de IA
+     * incluem automaticamente: são só metadados assinados, sem conteúdo executável.
+     */
+    private function hasEmbeddedFiles(string $scan): bool
+    {
+        $streams = preg_match_all('#/Type\s*/EmbeddedFile(?![A-Za-z0-9])#', $scan, $m, PREG_OFFSET_CAPTURE);
+        if (! preg_match('#/EmbeddedFiles?(?![A-Za-z0-9])#', $scan)) {
+            return false;
+        }
+        if ($streams === 0) {
+            return true; // Referência a anexo sem o anexo visível: não dá para confirmar o tipo.
+        }
+        foreach ($m[0] as [, $offset]) {
+            $open = strrpos(substr($scan, 0, $offset), '<<');
+            $close = strpos($scan, '>>', $offset);
+            $dict = substr($scan, $open === false ? $offset : $open, ($close === false ? $offset + 200 : $close) - ($open === false ? $offset : $open));
+            if (! preg_match('#/Subtype\s*/application/c2pa(?![A-Za-z0-9])#i', $dict)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

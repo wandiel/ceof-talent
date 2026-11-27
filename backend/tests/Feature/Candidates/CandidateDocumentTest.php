@@ -34,6 +34,23 @@ class CandidateDocumentTest extends TestCase
             ->assertCreated();
     }
 
+    public function test_pdf_with_content_credentials_seal_is_accepted(): void
+    {
+        $this->actingAsRole(Role::HrAnalyst);
+        // Selo C2PA ("Content Credentials") anexado por editores e ferramentas de IA: é só metadado.
+        $manifest = "\x00\x00jumb\x00jumdc2pa";
+        $this->upload($this->pdf('c2pa.pdf', "5 0 obj << /Type /Catalog /AF [10 0 R] /Names << /EmbeddedFiles << /Names [(Content Credentials) 10 0 R] >> >> >> endobj\n"
+            .'9 0 obj << /Length '.strlen($manifest)." /Type /EmbeddedFile /Subtype /application#2Fc2pa >>\nstream\n{$manifest}\nendstream\nendobj\n"
+            .'10 0 obj << /AFRelationship /C2PA_Manifest /EF << /F 9 0 R >> /Subtype (application/c2pa) /Type /Filespec >> endobj'))
+            ->assertCreated();
+
+        // Outro tipo de anexo continua bloqueado, mesmo ao lado de um selo C2PA.
+        $this->upload($this->pdf('c2pa-e-exe.pdf', "5 0 obj << /Names << /EmbeddedFiles << /Names [(a) 9 0 R (b) 11 0 R] >> >> >> endobj\n"
+            ."9 0 obj << /Length 4 /Type /EmbeddedFile /Subtype /application#2Fc2pa >>\nstream\nabcd\nendstream\nendobj\n"
+            ."11 0 obj << /Length 4 /Type /EmbeddedFile /Subtype /application#2Fx-msdownload >>\nstream\nMZ00\nendstream\nendobj"))
+            ->assertUnprocessable();
+    }
+
     private function pdf(string $name = 'curriculo.pdf', string $extra = ''): UploadedFile
     {
         $content = "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n{$extra}\ntrailer << /Root 1 0 R >>\n%%EOF\n";
