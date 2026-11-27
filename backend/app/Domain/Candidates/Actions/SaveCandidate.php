@@ -4,6 +4,7 @@ namespace App\Domain\Candidates\Actions;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Candidates\Enums\CandidateStatus;
+use App\Domain\Candidates\Search\CandidateSearchIndex;
 use App\Models\Candidate;
 use App\Models\Skill;
 use App\Models\User;
@@ -30,7 +31,10 @@ class SaveCandidate
 
     private const SECTIONS = ['educations' => 'formação', 'experiences' => 'experiências', 'courses' => 'cursos e certificações', 'skills' => 'competências'];
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly CandidateSearchIndex $searchIndex,
+    ) {}
 
     /** @param  array<string, mixed>  $data  dados validados por CandidateRequest */
     public function handle(Candidate $candidate, array $data, User $actor): Candidate
@@ -54,6 +58,7 @@ class SaveCandidate
             $candidate->save();
             $changes = Arr::except($candidate->getChanges(), ['updated_at', 'updated_by', 'cpf']);
             $this->syncSections($candidate, $data);
+            $this->searchIndex->refresh($candidate->id);
 
             $candidate->refresh()->load(['educations', 'experiences', 'courses', 'skills']);
 

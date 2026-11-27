@@ -18,6 +18,8 @@ export interface CandidateOptions {
   skill_levels: Option[]
   document_types: Option[]
   states: string[]
+  tags: TagItem[]
+  tag_colors: string[]
 }
 
 export interface CandidateListItem {
@@ -37,6 +39,10 @@ export interface CandidateListItem {
   source_label: string
   status: 'active' | 'inactive'
   documents_count?: number
+  experience_months?: number
+  is_favorite?: boolean
+  tags?: TagItem[]
+  skills_preview?: string[]
   created_at: string
   updated_at: string
 }
@@ -120,7 +126,7 @@ export interface Candidate extends CandidateListItem {
   notes: CandidateNote[]
   created_by?: string | null
   updated_by?: string | null
-  abilities: { update: boolean; delete: boolean; download_documents: boolean }
+  abilities: { update: boolean; delete: boolean; download_documents: boolean; manage_talent_pool: boolean }
 }
 
 export interface CandidatePayload {
@@ -173,6 +179,9 @@ export const candidatesApi = {
     const { data } = await http.get<Paginated<CandidateListItem>>('/v1/candidates', { params: clean(params) })
     return data
   },
+  forgetOptions() {
+    optionsCache = null
+  },
   options(): Promise<CandidateOptions> {
     optionsCache ??= http.get<{ data: CandidateOptions }>('/v1/candidates/options').then((r) => r.data.data)
     optionsCache.catch(() => (optionsCache = null))
@@ -224,5 +233,79 @@ export const candidatesApi = {
   async skills(search: string): Promise<{ name: string; candidates_count: number }[]> {
     const { data } = await http.get('/v1/skills', { params: { search } })
     return data.data
+  },
+}
+
+export interface TagItem {
+  id: string
+  name: string
+  color: string
+  candidates_count?: number
+}
+
+export interface DuplicateMatch {
+  candidate: CandidateListItem
+  reasons: string[]
+  score: number
+}
+
+export interface DuplicatePair {
+  a: CandidateListItem
+  b: CandidateListItem
+  reasons: string[]
+  score: number
+}
+
+/** Classes de cor das etiquetas (Tailwind precisa ver os nomes completos). */
+export const tagColorClasses: Record<string, string> = {
+  slate: 'bg-slate-100 text-slate-700 ring-slate-300',
+  blue: 'bg-blue-50 text-blue-800 ring-blue-200',
+  green: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  amber: 'bg-amber-50 text-amber-800 ring-amber-200',
+  red: 'bg-red-50 text-red-800 ring-red-200',
+  purple: 'bg-purple-50 text-purple-800 ring-purple-200',
+  pink: 'bg-pink-50 text-pink-800 ring-pink-200',
+  teal: 'bg-teal-50 text-teal-800 ring-teal-200',
+}
+
+export const talentPoolApi = {
+  async favorite(id: string, value: boolean): Promise<boolean> {
+    const { data } = value ? await http.put(`/v1/candidates/${id}/favorite`) : await http.delete(`/v1/candidates/${id}/favorite`)
+    return data.data.is_favorite
+  },
+  async setTags(id: string, tagIds: string[]): Promise<TagItem[]> {
+    const { data } = await http.put<{ data: TagItem[] }>(`/v1/candidates/${id}/tags`, { tags: tagIds })
+    return data.data
+  },
+  async tags(): Promise<TagItem[]> {
+    const { data } = await http.get<{ data: TagItem[] }>('/v1/tags')
+    return data.data
+  },
+  async createTag(payload: { name: string; color: string }): Promise<TagItem> {
+    const { data } = await http.post<{ data: TagItem }>('/v1/tags', payload)
+    return data.data
+  },
+  async updateTag(id: string, payload: { name: string; color: string }): Promise<TagItem> {
+    const { data } = await http.put<{ data: TagItem }>(`/v1/tags/${id}`, payload)
+    return data.data
+  },
+  async removeTag(id: string): Promise<void> {
+    await http.delete(`/v1/tags/${id}`)
+  },
+  async checkDuplicates(payload: Record<string, string | null | undefined>): Promise<DuplicateMatch[]> {
+    const { data } = await http.post<{ data: DuplicateMatch[] }>('/v1/candidates/duplicates/check', payload)
+    return data.data
+  },
+  async candidateDuplicates(id: string): Promise<DuplicateMatch[]> {
+    const { data } = await http.get<{ data: DuplicateMatch[] }>(`/v1/candidates/${id}/duplicates`)
+    return data.data
+  },
+  async pairs(page = 1): Promise<Paginated<DuplicatePair>> {
+    const { data } = await http.get<Paginated<DuplicatePair>>('/v1/candidates/duplicates', { params: { page } })
+    return data
+  },
+  async dismiss(id: string, otherId: string): Promise<string> {
+    const { data } = await http.post<{ message: string }>(`/v1/candidates/${id}/duplicates/${otherId}/dismiss`)
+    return data.message
   },
 }

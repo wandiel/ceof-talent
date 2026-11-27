@@ -81,5 +81,5 @@ export interface ListParams {
   sort?: string
   page?: number
   per_page?: number
-  [key: string]: string | number | undefined
+  [key: string]: string | number | string[] | undefined
 }

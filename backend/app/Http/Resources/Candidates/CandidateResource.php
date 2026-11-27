@@ -86,6 +86,7 @@ class CandidateResource extends JsonResource
                 'update' => $user?->can('update', $this->resource) ?? false,
                 'delete' => $user?->can('delete', $this->resource) ?? false,
                 'download_documents' => $user?->can('downloadDocuments', $this->resource) ?? false,
+                'manage_talent_pool' => $user?->can('manageTalentPool', $this->resource) ?? false,
             ],
         ];
     }

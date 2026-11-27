@@ -62,3 +62,12 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
   return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`
 }
+
+/** 30 meses -> "2 anos e 6 meses" */
+export function formatExperience(months: number | null | undefined): string {
+  if (!months) return 'Sem experiência informada'
+  const years = Math.floor(months / 12)
+  const rest = months % 12
+  const parts = [years ? `${years} ano${years > 1 ? 's' : ''}` : '', rest ? `${rest} ${rest > 1 ? 'meses' : 'mês'}` : ''].filter(Boolean)
+  return parts.join(' e ')
+}

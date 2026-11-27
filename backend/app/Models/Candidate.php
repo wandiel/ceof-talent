@@ -36,7 +36,7 @@ class Candidate extends Model
         'source', 'source_detail', 'status',
     ];
 
-    protected $hidden = ['cpf', 'cpf_hash'];
+    protected $hidden = ['cpf', 'cpf_hash', 'search_vector'];
 
     protected function casts(): array
     {
@@ -113,6 +113,18 @@ class Candidate extends Model
     public function skills(): BelongsToMany
     {
         return $this->belongsToMany(Skill::class)->withPivot('level')->orderBy('name');
+    }
+
+    /** @return BelongsToMany<Tag, $this> */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class)->withPivot(['tagged_by', 'created_at'])->orderBy('name');
+    }
+
+    /** Usuários que marcaram o candidato como favorito. @return BelongsToMany<User, $this> */
+    public function favoritedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'candidate_favorites')->withPivot('created_at');
     }
 
     /** @return HasMany<CandidateDocument, $this> */

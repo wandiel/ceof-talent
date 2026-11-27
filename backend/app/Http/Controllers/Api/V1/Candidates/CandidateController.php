@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Candidates;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Candidates\Actions\SaveCandidate;
+use App\Domain\Candidates\Search\CandidateSearch;
 use App\Domain\Candidates\Enums\Availability;
 use App\Domain\Candidates\Enums\CandidateSource;
 use App\Domain\Candidates\Enums\CandidateStatus;
@@ -21,7 +22,7 @@ use App\Http\Resources\Candidates\CandidateListResource;
 use App\Http\Resources\Candidates\CandidateResource;
 use App\Models\AuditLog;
 use App\Models\Candidate;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Tag;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -30,56 +31,52 @@ use Illuminate\Validation\Rule;
 
 class CandidateController extends Controller
 {
-    private const SORTABLE = ['full_name', 'created_at', 'updated_at', 'city'];
-
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request, CandidateSearch $search): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Candidate::class);
 
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
+            'keywords' => ['nullable', 'string', 'max:200'],
             'status' => ['nullable', Rule::enum(CandidateStatus::class)],
             'professional_area' => ['nullable', Rule::enum(ProfessionalArea::class)],
             'education_level' => ['nullable', Rule::enum(EducationLevel::class)],
+            'education_level_min' => ['nullable', Rule::enum(EducationLevel::class)],
+            'education_course' => ['nullable', 'string', 'max:100'],
+            'experience_title' => ['nullable', 'string', 'max:100'],
+            'experience_company' => ['nullable', 'string', 'max:100'],
+            'min_experience_years' => ['nullable', 'numeric', 'min:0', 'max:60'],
+            'skills' => ['nullable', 'array', 'max:10'],
+            'skills.*' => ['string', 'max:80'],
+            'tags' => ['nullable', 'array', 'max:10'],
+            'tags.*' => ['uuid'],
             'source' => ['nullable', Rule::enum(CandidateSource::class)],
             'availability' => ['nullable', Rule::enum(Availability::class)],
+            'work_shift' => ['nullable', Rule::enum(WorkShift::class)],
             'state' => ['nullable', Rule::in(UnitRequest::STATES)],
             'city' => ['nullable', 'string', 'max:120'],
-            'sort' => ['nullable', 'string', 'max:30'],
+            'salary_max' => ['nullable', 'numeric', 'min:0'],
+            'age_min' => ['nullable', 'integer', 'min:14', 'max:100'],
+            'age_max' => ['nullable', 'integer', 'min:14', 'max:100', Rule::when($request->filled('age_min'), 'gte:age_min')],
+            'willing_to_relocate' => ['nullable', 'boolean'],
+            'has_resume' => ['nullable', 'boolean'],
+            'favorites' => ['nullable', 'boolean'],
+            'created_from' => ['nullable', 'date'],
+            'created_to' => ['nullable', 'date', 'after_or_equal:created_from'],
+            'sort' => ['nullable', 'string', Rule::in(array_merge(CandidateSearch::SORTABLE, array_map(fn ($s) => '-'.$s, CandidateSearch::SORTABLE)))],
             'per_page' => ['nullable', 'integer', 'min:5', 'max:100'],
-        ]);
+        ], [], ['age_max' => 'idade máxima', 'age_min' => 'idade mínima', 'created_to' => 'cadastrado até', 'created_from' => 'cadastrado desde']);
 
-        $query = Candidate::query()->visibleTo($request->user())->withCount('documents');
+        $user = $request->user();
+        $query = Candidate::query()->visibleTo($user)
+            ->withCount('documents')
+            ->with(['tags', 'skills'])
+            ->withExists(['favoritedBy as is_favorite' => fn ($q) => $q->whereKey($user->id)]);
 
-        if ($search = $filters['search'] ?? null) {
-            $term = '%'.addcslashes($search, '%_\\').'%';
-            $digits = preg_replace('/\D/', '', $search);
-            $query->where(function (Builder $q) use ($term, $digits) {
-                $q->where('full_name', 'ilike', $term)
-                    ->orWhere('social_name', 'ilike', $term)
-                    ->orWhere('email', 'ilike', $term)
-                    ->orWhere('desired_position', 'ilike', $term);
-                if (strlen($digits) >= 4) {
-                    $q->orWhere('phone', 'like', '%'.$digits.'%')->orWhere('phone_secondary', 'like', '%'.$digits.'%');
-                }
-            });
-        }
+        $search->apply($query, $filters, $user);
 
-        foreach (['status', 'professional_area', 'education_level', 'source', 'availability', 'state'] as $field) {
-            if (! empty($filters[$field])) {
-                $query->where($field, $filters[$field]);
-            }
-        }
-
-        if (! empty($filters['city'])) {
-            $query->where('city', 'ilike', addcslashes($filters['city'], '%_\\'));
-        }
-
-        $sort = $filters['sort'] ?? '-created_at';
-        $column = ltrim($sort, '-');
-        $query->orderBy(in_array($column, self::SORTABLE, true) ? $column : 'created_at', str_starts_with($sort, '-') ? 'desc' : 'asc')->orderBy('id');
-
-        return CandidateListResource::collection($query->paginate((int) ($filters['per_page'] ?? 15))->withQueryString());
+        return CandidateListResource::collection($query->paginate((int) ($filters['per_page'] ?? 15))->withQueryString())
+            ->additional(['meta' => ['highlight_skills' => array_values($filters['skills'] ?? [])]]);
     }
 
     /** Listas de opções usadas pelos formulários e filtros. */
@@ -99,6 +96,8 @@ class CandidateController extends Controller
             'skill_levels' => SkillLevel::options(),
             'document_types' => DocumentType::options(),
             'states' => UnitRequest::STATES,
+            'tags' => Tag::query()->orderBy('name')->get()->map(fn (Tag $t) => ['id' => $t->uuid, 'name' => $t->name, 'color' => $t->color]),
+            'tag_colors' => Tag::COLORS,
         ]]);
     }
 
@@ -186,10 +185,15 @@ class CandidateController extends Controller
         'candidate.document_downloaded' => 'Documento baixado',
         'candidate.document_deleted' => 'Documento removido',
         'candidate.note_added' => 'Anotação registrada',
+        'candidate.tags_changed' => 'Etiquetas alteradas',
+        'candidate.duplicate_dismissed' => 'Duplicidade descartada',
     ];
 
     private function loadDetail(Candidate $candidate): Candidate
     {
-        return $candidate->load(['educations', 'experiences', 'courses', 'skills', 'documents.uploader', 'notes.author', 'creator', 'updater']);
+        $candidate->load(['educations', 'experiences', 'courses', 'skills', 'tags', 'documents.uploader', 'notes.author', 'creator', 'updater']);
+        $candidate->setAttribute('is_favorite', $candidate->favoritedBy()->whereKey(request()->user()?->id)->exists());
+
+        return $candidate;
     }
 }

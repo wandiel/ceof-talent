@@ -51,6 +51,7 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | [02 — Infraestrutura Docker](docs/02-infraestrutura-docker.md) | serviços, execução, produção, backup/restauração, testes |
 | [03 — Autenticação e permissões](docs/03-autenticacao-permissoes.md) | login, senhas, perfis, usuários, estrutura organizacional, API |
 | [04 — Cadastro de candidatos](docs/04-cadastro-candidatos.md) | regras do cadastro, anexos seguros, permissões, API |
+| [05 — Banco de currículos](docs/05-banco-curriculos.md) | busca avançada, favoritos, etiquetas, duplicidades, API |
 
 ## Status
 
@@ -60,5 +61,6 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | 2. Estrutura Docker e infraestrutura | ✅ |
 | 3. Banco de dados e autenticação | ✅ |
 | 4. Cadastro de candidatos | ✅ |
-| 5. Banco de currículos | próxima |
-| 6–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
+| 5. Banco de currículos | ✅ |
+| 6. Vagas e processos seletivos | próxima |
+| 7–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
