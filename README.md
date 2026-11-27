@@ -24,6 +24,13 @@ Crie o primeiro administrador (o comando pede nome, e-mail e senha):
 docker compose exec app php artisan ceof:create-admin
 ```
 
+Opcional, para conhecer o sistema com dados fictícios (só fora de produção e com o banco ainda
+sem candidatos):
+
+```bash
+docker compose exec app php artisan ceof:demo-data
+```
+
 Abra **http://localhost:8080** (ou a porta definida em `APP_PORT`) e entre com esse usuário.
 
 ```bash
@@ -54,6 +61,7 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | [05 — Banco de currículos](docs/05-banco-curriculos.md) | busca avançada, favoritos, etiquetas, duplicidades, API |
 | [06 — Vagas e processos seletivos](docs/06-vagas-processos-seletivos.md) | ciclo e aprovação da vaga, quadro Kanban, regras de movimentação, API |
 | [07 — Entrevistas, avaliações e IA](docs/07-entrevistas-avaliacoes-ia.md) | agenda, pareceres por critérios, lembretes, leitura de currículo, sugestões e aderência |
+| [08 — Dashboard e relatórios](docs/08-dashboard-relatorios.md) | indicadores, gráficos, 14 relatórios, exportação PDF/XLSX/CSV, dados de demonstração |
 
 ## Status
 
@@ -66,5 +74,6 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | 5. Banco de currículos | ✅ |
 | 6. Vagas e processos seletivos | ✅ |
 | 7. Entrevistas, avaliações e leitura de currículos | ✅ |
-| 8. Dashboard e relatórios | próxima |
-| 9–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
+| 8. Dashboard e relatórios | ✅ |
+| 9. Portal público | próxima |
+| 10–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |

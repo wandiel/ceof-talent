@@ -10,15 +10,17 @@ use App\Http\Controllers\Api\V1\Candidates\SkillController;
 use App\Http\Controllers\Api\V1\Candidates\TagController;
 use App\Http\Controllers\Api\V1\Candidates\TalentPoolController;
 use App\Http\Controllers\Api\V1\Identity\RoleController;
+use App\Http\Controllers\Api\V1\Identity\UserController;
 use App\Http\Controllers\Api\V1\Intelligence\SuggestionController;
 use App\Http\Controllers\Api\V1\Interviews\EvaluationCriterionController;
 use App\Http\Controllers\Api\V1\Interviews\InterviewController;
-use App\Http\Controllers\Api\V1\Identity\UserController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\UnitController;
 use App\Http\Controllers\Api\V1\Recruitment\ApplicationController;
 use App\Http\Controllers\Api\V1\Recruitment\JobOpeningController;
+use App\Http\Controllers\Api\V1\Reports\DashboardController;
+use App\Http\Controllers\Api\V1\Reports\ReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -112,6 +114,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::post('candidates/{candidate}/documents/{document}/read', [SuggestionController::class, 'reread'])->name('candidates.documents.read');
             Route::get('applications/{application}/match', [SuggestionController::class, 'match'])->name('applications.match');
             Route::apiResource('evaluation-criteria', EvaluationCriterionController::class)->except('show')->parameters(['evaluation-criteria' => 'criterion']);
+
+            // Dashboard e relatórios (Fase 8)
+            Route::get('dashboard', DashboardController::class)->name('dashboard');
+            Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+            Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show')->where('report', '[a-z_]+');
+            Route::get('reports/{report}/export/{format}', [ReportController::class, 'export'])->name('reports.export')
+                ->where(['report' => '[a-z_]+', 'format' => 'csv|xlsx|pdf'])->middleware('throttle:20,1');
         });
     });
 });
