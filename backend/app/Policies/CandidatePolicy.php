@@ -39,12 +39,18 @@ class CandidatePolicy
 
     public function update(User $actor, Candidate $candidate): bool
     {
-        return $actor->can(Permission::CandidatesManage->value);
+        return $actor->can(Permission::CandidatesManage->value) && ! $candidate->isAnonymized();
     }
 
     public function delete(User $actor, Candidate $candidate): bool
     {
-        return $actor->can(Permission::CandidatesDelete->value);
+        return $actor->can(Permission::CandidatesDelete->value) && ! $candidate->isAnonymized();
+    }
+
+    /** LGPD: consentimentos, exportação dos dados e anonimização. */
+    public function managePrivacy(User $actor, Candidate $candidate): bool
+    {
+        return $actor->can(Permission::PrivacyManage->value);
     }
 
     public function downloadDocuments(User $actor, Candidate $candidate): bool

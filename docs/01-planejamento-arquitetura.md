@@ -292,8 +292,8 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
 | 7 | Entrevistas e avaliações | ✅ concluída | agenda, critérios, pareceres; base de IA (7.9) |
 | 8 | Dashboard e relatórios | ✅ concluída | indicadores reais, exportação PDF/XLSX/CSV |
 | 9 | Portal público | ✅ concluída | trabalhe conosco, candidatura, consentimento, confirmação |
-| 10 | LGPD e auditoria | ⏳ próxima | retenção, direitos do titular, trilha de auditoria completa |
-| 11 | Testes e homologação | pendente | suíte completa aprovada, testes de segurança e de restauração |
+| 10 | LGPD e auditoria | ✅ concluída | retenção, direitos do titular, trilha de auditoria completa |
+| 11 | Testes e homologação | ⏳ próxima | suíte completa aprovada, testes de segurança e de restauração |
 | 12 | Documentação e nuvem | pendente | manuais, OpenAPI, implantação em VPS/cloud, backup externo S3 |
 
 ## 12. Estratégia de testes

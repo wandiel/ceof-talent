@@ -128,7 +128,8 @@ export interface Candidate extends CandidateListItem {
   notes: CandidateNote[]
   created_by?: string | null
   updated_by?: string | null
-  abilities: { update: boolean; delete: boolean; download_documents: boolean; manage_talent_pool: boolean }
+  abilities: { update: boolean; delete: boolean; download_documents: boolean; manage_talent_pool: boolean; manage_privacy: boolean }
+  anonymized_at?: string | null
 }
 
 export interface CandidatePayload {

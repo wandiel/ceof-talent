@@ -18,6 +18,10 @@ use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\UnitController;
 use App\Http\Controllers\Api\V1\Portal\PortalController;
+use App\Http\Controllers\Api\V1\Privacy\AuditLogController;
+use App\Http\Controllers\Api\V1\Privacy\CandidatePrivacyController;
+use App\Http\Controllers\Api\V1\Privacy\PrivacyOverviewController;
+use App\Http\Controllers\Api\V1\Privacy\PrivacyRequestController;
 use App\Http\Controllers\Api\V1\Recruitment\ApplicationController;
 use App\Http\Controllers\Api\V1\Recruitment\JobOpeningController;
 use App\Http\Controllers\Api\V1\Reports\DashboardController;
@@ -126,6 +130,17 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::post('candidates/{candidate}/documents/{document}/read', [SuggestionController::class, 'reread'])->name('candidates.documents.read');
             Route::get('applications/{application}/match', [SuggestionController::class, 'match'])->name('applications.match');
             Route::apiResource('evaluation-criteria', EvaluationCriterionController::class)->except('show')->parameters(['evaluation-criteria' => 'criterion']);
+
+            // LGPD e auditoria (Fase 10)
+            Route::get('privacy/overview', PrivacyOverviewController::class)->name('privacy.overview');
+            Route::get('privacy/requests/options', [PrivacyRequestController::class, 'options'])->name('privacy.requests.options');
+            Route::apiResource('privacy/requests', PrivacyRequestController::class)->except('destroy')->parameters(['requests' => 'privacyRequest'])->names('privacy.requests');
+            Route::get('candidates/{candidate}/privacy', [CandidatePrivacyController::class, 'show'])->name('candidates.privacy.show');
+            Route::post('candidates/{candidate}/consents', [CandidatePrivacyController::class, 'storeConsent'])->name('candidates.consents.store');
+            Route::post('candidates/{candidate}/consents/{consent}/revoke', [CandidatePrivacyController::class, 'revokeConsent'])->name('candidates.consents.revoke');
+            Route::get('candidates/{candidate}/privacy/export', [CandidatePrivacyController::class, 'export'])->name('candidates.privacy.export');
+            Route::post('candidates/{candidate}/anonymize', [CandidatePrivacyController::class, 'anonymize'])->name('candidates.anonymize');
+            Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
             // Dashboard e relatórios (Fase 8)
             Route::get('dashboard', DashboardController::class)->name('dashboard');

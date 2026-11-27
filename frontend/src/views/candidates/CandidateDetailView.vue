@@ -18,6 +18,7 @@ import CandidateSuggestions from './components/CandidateSuggestions.vue'
 import CandidateHistory from './components/CandidateHistory.vue'
 import CandidateNotes from './components/CandidateNotes.vue'
 import CandidateProfile from './components/CandidateProfile.vue'
+import CandidatePrivacy from './components/CandidatePrivacy.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,10 +38,11 @@ const allTabs = [
   { key: 'processos', label: 'Processos' },
   { key: 'documentos', label: 'Documentos' },
   { key: 'anotacoes', label: 'Anotações' },
+  { key: 'privacidade', label: 'Privacidade (LGPD)' },
   { key: 'historico', label: 'Histórico' },
 ] as const
 type TabKey = (typeof allTabs)[number]['key']
-const tabs = allTabs.filter((t) => t.key !== 'processos' || auth.can('recruitment.view'))
+const tabs = allTabs.filter((t) => (t.key !== 'processos' || auth.can('recruitment.view')) && (t.key !== 'privacidade' || auth.can('privacy.manage')))
 
 const tab = computed<TabKey>({
   get: () => (tabs.some((t) => t.key === route.query.aba) ? (route.query.aba as TabKey) : 'perfil'),
@@ -166,7 +168,11 @@ async function reloadAfterSuggestion() {
       </dl>
     </div>
 
-    <DuplicateAlert v-if="auth.can('candidates.view')" :key="candidate.id" :candidate-id="candidate.id" :can-dismiss="candidate.abilities.update" @changed="changed" />
+    <div v-if="candidate.anonymized_at" class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+      Cadastro anonimizado em {{ formatDate(candidate.anonymized_at) }} (LGPD). Os dados pessoais foram removidos; ficam apenas informações estatísticas.
+    </div>
+
+    <DuplicateAlert v-if="auth.can('candidates.view') && !candidate.anonymized_at" :key="candidate.id" :candidate-id="candidate.id" :can-dismiss="candidate.abilities.update" @changed="changed" />
 
     <div class="mb-4 flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist">
       <button
@@ -191,6 +197,7 @@ async function reloadAfterSuggestion() {
     <CandidateApplications v-else-if="tab === 'processos'" :candidate-id="candidate.id" />
     <CandidateDocuments v-else-if="tab === 'documentos'" v-model:documents="candidate.documents" :candidate="candidate" :types="options.document_types" @changed="changed" />
     <CandidateNotes v-else-if="tab === 'anotacoes'" v-model:notes="candidate.notes" :candidate="candidate" @changed="changed" />
+    <CandidatePrivacy v-else-if="tab === 'privacidade'" :candidate-id="candidate.id" :anonymized="!!candidate.anonymized_at" @changed="reloadAfterSuggestion" />
     <CandidateHistory v-else :key="historyKey" :candidate-id="candidate.id" />
 
     <p class="mt-6 text-xs text-slate-400">

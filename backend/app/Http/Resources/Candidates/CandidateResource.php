@@ -31,6 +31,7 @@ class CandidateResource extends JsonResource
         return [
             ...(new CandidateListResource($this->resource))->toArray($request),
             'phone_secondary' => $this->phone_secondary,
+            'anonymized_at' => $this->anonymized_at?->toIso8601String(),
             'cpf' => $canManage ? Cpf::format($this->cpf) : null,
             'cpf_masked' => Cpf::mask($this->cpf),
             'birth_date' => $this->birth_date?->toDateString(),
@@ -87,6 +88,7 @@ class CandidateResource extends JsonResource
                 'delete' => $user?->can('delete', $this->resource) ?? false,
                 'download_documents' => $user?->can('downloadDocuments', $this->resource) ?? false,
                 'manage_talent_pool' => $user?->can('manageTalentPool', $this->resource) ?? false,
+                'manage_privacy' => $user?->can('managePrivacy', $this->resource) ?? false,
             ],
         ];
     }

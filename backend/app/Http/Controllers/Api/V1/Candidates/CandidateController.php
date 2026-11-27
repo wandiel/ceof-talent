@@ -197,6 +197,11 @@ class CandidateController extends Controller
         'candidate.suggestion_reviewed' => 'Sugestão automática revisada',
         'candidate.document_read' => 'Currículo lido automaticamente',
         'candidate.portal_submission' => 'Envio pelo portal Trabalhe conosco',
+        'candidate.anonymized' => 'Cadastro anonimizado (LGPD)',
+        'candidate.consent_granted' => 'Consentimento registrado',
+        'candidate.consent_revoked' => 'Consentimento revogado',
+        'candidate.data_exported' => 'Relatório de dados pessoais gerado',
+        'privacy.request_created' => 'Solicitação de titular (LGPD)',
     ];
 
     private function loadDetail(Candidate $candidate): Candidate

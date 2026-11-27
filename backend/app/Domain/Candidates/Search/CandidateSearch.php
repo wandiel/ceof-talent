@@ -41,6 +41,8 @@ class CandidateSearch
             $query->select('candidates.*');
         }
         $query->selectRaw('round(('.self::EXPERIENCE_DAYS_SQL.') / 30.4375)::int AS experience_months');
+        // Cadastros anonimizados (LGPD) não aparecem no banco de talentos.
+        $query->whereNull('candidates.anonymized_at');
 
         if ($search = $f['search'] ?? null) {
             $this->simpleSearch($query, $search);
