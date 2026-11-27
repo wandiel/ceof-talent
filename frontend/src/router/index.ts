@@ -76,6 +76,8 @@ const router = createRouter({
         { path: 'entrevistas', name: 'interviews', component: () => import('@/views/interviews/InterviewsView.vue'), meta: { title: 'Entrevistas', permission: 'interviews.view' } },
         { path: 'entrevistas/:id', name: 'interview-detail', component: () => import('@/views/interviews/InterviewDetailView.vue'), meta: { title: 'Entrevista', permission: 'interviews.view' } },
         { path: 'criterios-avaliacao', name: 'criteria', component: () => import('@/views/interviews/CriteriaView.vue'), meta: { title: 'Critérios de avaliação', permission: 'jobs.manage' } },
+        { path: 'lgpd', name: 'privacy-admin', component: () => import('@/views/privacy/LgpdView.vue'), meta: { title: 'LGPD e privacidade', permission: 'privacy.manage' } },
+        { path: 'auditoria', name: 'audit', component: () => import('@/views/privacy/AuditView.vue'), meta: { title: 'Auditoria', permission: 'audit.view' } },
         { path: 'status', name: 'system-status', component: () => import('@/views/SystemStatusView.vue'), meta: { title: 'Status do sistema' } },
         { path: 'acesso-negado', name: 'forbidden', component: () => import('@/views/ForbiddenView.vue'), meta: { title: 'Acesso negado' } },
       ],

@@ -63,6 +63,7 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | [07 — Entrevistas, avaliações e IA](docs/07-entrevistas-avaliacoes-ia.md) | agenda, pareceres por critérios, lembretes, leitura de currículo, sugestões e aderência |
 | [08 — Dashboard e relatórios](docs/08-dashboard-relatorios.md) | indicadores, gráficos, 14 relatórios, exportação PDF/XLSX/CSV, dados de demonstração |
 | [09 — Portal público](docs/09-portal-publico.md) | Trabalhe conosco, candidatura, cadastro espontâneo, protocolo, aviso de privacidade |
+| [10 — LGPD e auditoria](docs/10-lgpd-auditoria.md) | direitos do titular, consentimentos, anonimização, retenção, trilha de auditoria |
 
 ## Status
 
@@ -77,5 +78,6 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | 7. Entrevistas, avaliações e leitura de currículos | ✅ |
 | 8. Dashboard e relatórios | ✅ |
 | 9. Portal público (Trabalhe conosco) | ✅ |
-| 10. LGPD e auditoria | próxima |
-| 11–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
+| 10. LGPD e auditoria | ✅ |
+| 11. Testes e homologação | próxima |
+| 12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |

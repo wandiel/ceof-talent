@@ -51,6 +51,7 @@ class Candidate extends Model
             'availability' => Availability::class,
             'source' => CandidateSource::class,
             'status' => CandidateStatus::class,
+            'anonymized_at' => 'datetime',
         ];
     }
 
@@ -67,6 +68,11 @@ class Candidate extends Model
 
         $this->cpf = $digits;
         $this->cpf_hash = $hash;
+    }
+
+    public function isAnonymized(): bool
+    {
+        return $this->anonymized_at !== null;
     }
 
     /** @param  Builder<self>  $query */

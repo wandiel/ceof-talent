@@ -23,7 +23,7 @@
 | Experiência | entrada obrigatória; saída obrigatória, salvo "Emprego atual"; datas não podem estar no futuro |
 | Competências | catálogo compartilhado; "excel" e "Excel" são a mesma competência |
 | Situação | Ativo ou Inativo (inativar mantém dados e histórico) |
-| Exclusão | só perfis com `candidates.delete` (Administrador e Gestor de RH); exclusão lógica, registrada na auditoria. A anonimização definitiva vem na Fase 10 (LGPD) |
+| Exclusão | só perfis com `candidates.delete` (Administrador e Gestor de RH); exclusão lógica, registrada na auditoria. A anonimização definitiva está na Fase 10 (LGPD): após 30 dias o cadastro excluído é anonimizado |
 | Auditoria | o CPF nunca aparece na trilha; o acesso à ficha é registrado (`candidate.viewed`) |
 
 > **Atenção à `APP_KEY`**: o CPF é criptografado com ela. Guarde a chave de produção junto aos
