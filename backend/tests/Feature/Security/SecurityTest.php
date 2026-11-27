@@ -27,6 +27,7 @@ class SecurityTest extends TestCase
         'api/v1/auth/forgot-password',
         'api/v1/auth/reset-password',
         'api/v1/public/applications',
+        'api/v1/public/cep/{cep}',
         'api/v1/public/jobs',
         'api/v1/public/jobs/{job}',
         'api/v1/public/options',

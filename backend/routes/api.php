@@ -57,6 +57,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::get('options', [PortalController::class, 'options'])->name('options');
             Route::get('privacy', [PortalController::class, 'privacy'])->name('privacy');
         });
+        Route::get('cep/{cep}', [PortalController::class, 'cep'])->middleware('throttle:cep')->name('cep')->where('cep', '[0-9]{8}');
         Route::post('applications', [PortalController::class, 'submit'])->middleware('throttle:portal')->name('applications.store');
     });
 

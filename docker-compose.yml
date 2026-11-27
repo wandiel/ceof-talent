@@ -58,6 +58,7 @@ x-backend-env: &backend-env
   PRIVACY_KEEP_HIRED: ${PRIVACY_KEEP_HIRED:-true}
   PRIVACY_AUDIT_MONTHS: ${PRIVACY_AUDIT_MONTHS:-60}
   PRIVACY_RETENTION_ENABLED: ${PRIVACY_RETENTION_ENABLED:-true}
+  CEP_LOOKUP_ENABLED: ${CEP_LOOKUP_ENABLED:-true}
 
 x-backend-build: &backend-build
   context: .

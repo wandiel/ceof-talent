@@ -14,6 +14,11 @@ return [
     |
     */
 
+    // Consulta de endereço pelo CEP (ViaCEP com BrasilAPI de reserva).
+    'cep' => [
+        'enabled' => (bool) env('CEP_LOOKUP_ENABLED', true),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

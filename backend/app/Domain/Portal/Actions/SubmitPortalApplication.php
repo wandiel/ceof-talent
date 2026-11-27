@@ -37,9 +37,9 @@ use Illuminate\Validation\ValidationException;
  */
 class SubmitPortalApplication
 {
-    private const PROFILE_FIELDS = ['full_name', 'social_name', 'email', 'phone', 'birth_date', 'city', 'state', 'professional_area', 'education_level', 'desired_position', 'summary', 'linkedin_url'];
+    private const PROFILE_FIELDS = ['full_name', 'social_name', 'email', 'phone', 'birth_date', 'zip_code', 'neighborhood', 'city', 'state', 'professional_area', 'education_level', 'desired_position', 'summary', 'linkedin_url'];
 
-    private const LABELS = ['full_name' => 'nome', 'social_name' => 'nome social', 'phone' => 'telefone', 'birth_date' => 'nascimento', 'city' => 'cidade', 'state' => 'UF', 'professional_area' => 'área', 'education_level' => 'escolaridade', 'desired_position' => 'cargo pretendido', 'linkedin_url' => 'LinkedIn', 'cpf' => 'CPF'];
+    private const LABELS = ['full_name' => 'nome', 'social_name' => 'nome social', 'phone' => 'telefone', 'birth_date' => 'nascimento', 'zip_code' => 'CEP', 'neighborhood' => 'bairro', 'city' => 'cidade', 'state' => 'UF', 'professional_area' => 'área', 'education_level' => 'escolaridade', 'desired_position' => 'cargo pretendido', 'linkedin_url' => 'LinkedIn', 'cpf' => 'CPF'];
 
     public function __construct(
         private readonly StoreCandidateDocument $documents,

@@ -6,6 +6,8 @@ import { portalApi, receiptStore, type PortalOptions, type PublicJob } from '@/a
 import BaseButton from '@/components/ui/BaseButton.vue'
 import FormField from '@/components/ui/FormField.vue'
 import { inputClass } from '@/components/ui/inputClass'
+import { useCepAutofill } from '@/composables/useCepAutofill'
+import { maskCep } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,6 +25,8 @@ interface PortalForm {
   phone: string
   cpf: string
   birth_date: string
+  zip_code: string
+  neighborhood: string
   city: string
   state: string
   professional_area: string
@@ -42,6 +46,8 @@ const fields = reactive<PortalForm>({
   phone: '',
   cpf: '',
   birth_date: '',
+  zip_code: '',
+  neighborhood: '',
   city: '',
   state: 'AM',
   professional_area: '',
@@ -53,6 +59,7 @@ const fields = reactive<PortalForm>({
   talent_pool_consent: true,
   website: '',
 })
+const cep = useCepAutofill(() => fields.zip_code, fields)
 const resume = ref<File | null>(null)
 const documents = ref<File[]>([])
 
@@ -154,6 +161,14 @@ async function submit() {
           </FormField>
           <FormField label="Data de nascimento" for="p-birth" hint="Opcional." :error="field('birth_date')">
             <input id="p-birth" v-model="fields.birth_date" type="date" :class="cls('birth_date')" />
+          </FormField>
+          <FormField label="CEP" for="p-cep" :error="field('zip_code')">
+            <input id="p-cep" :value="fields.zip_code" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" :class="cls('zip_code')" @input="fields.zip_code = maskCep(($event.target as HTMLInputElement).value)" />
+            <p v-if="cep.message.value && !field('zip_code')" class="mt-1 text-xs" :class="cep.status.value === 'not_found' ? 'text-amber-700' : 'text-slate-500'" data-testid="cep-status">{{ cep.message.value }}</p>
+            <p v-else-if="!field('zip_code')" class="mt-1 text-xs text-slate-500">Opcional. Digite o CEP e a cidade e a UF são preenchidas.</p>
+          </FormField>
+          <FormField label="Bairro" for="p-neigh" hint="Opcional." :error="field('neighborhood')">
+            <input id="p-neigh" v-model="fields.neighborhood" autocomplete="address-level3" maxlength="120" :class="cls('neighborhood')" />
           </FormField>
           <FormField label="Cidade" for="p-city" required :error="field('city')">
             <input id="p-city" v-model="fields.city" autocomplete="address-level2" :class="cls('city')" />

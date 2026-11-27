@@ -1,6 +1,14 @@
 import { ensureCsrfCookie, http } from './http'
 import type { Option } from './candidates'
 
+export interface CepAddress {
+  cep: string
+  street: string | null
+  neighborhood: string | null
+  city: string
+  state: string
+}
+
 export interface PublicJob {
   id: string
   code: string
@@ -65,6 +73,15 @@ export const portalApi = {
       throw e
     })
     return optionsCache
+  },
+  /** Endereço pelo CEP (null quando não encontrado ou fora do ar). */
+  async cep(cep: string): Promise<CepAddress | null> {
+    try {
+      const { data } = await http.get<{ data: CepAddress }>(`/v1/public/cep/${cep}`, { timeout: 10000 })
+      return data.data
+    } catch {
+      return null
+    }
   },
   async submit(form: FormData) {
     await ensureCsrfCookie()

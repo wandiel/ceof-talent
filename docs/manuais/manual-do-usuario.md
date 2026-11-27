@@ -31,6 +31,9 @@ telefone), área, escolaridade, formação, experiências, cursos e competência
 **Cadastrar candidato**. Em seguida, na aba **Documentos**, anexe o currículo (PDF, Word, ODT,
 JPG ou PNG, até 10 MB).
 
+Digitando o **CEP**, a cidade, a UF e o bairro são preenchidos sozinhos (o mesmo vale no portal
+Trabalhe conosco). Se o CEP não for encontrado, basta preencher a cidade e a UF à mão.
+
 O sistema avisa quando já existe alguém com o mesmo e-mail, CPF ou nome e telefone parecidos
 (menu **Duplicidades**).
 

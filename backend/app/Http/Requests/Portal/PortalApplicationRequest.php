@@ -32,6 +32,8 @@ class PortalApplicationRequest extends FormRequest
             'email' => $this->filled('email') ? mb_strtolower(trim((string) $this->input('email'))) : null,
             'phone' => $digits('phone'),
             'cpf' => $digits('cpf'),
+            'zip_code' => $digits('zip_code'),
+            'neighborhood' => $text('neighborhood'),
             'city' => $text('city'),
             'state' => $this->filled('state') ? mb_strtoupper((string) $this->input('state')) : null,
             'desired_position' => $text('desired_position'),
@@ -53,6 +55,8 @@ class PortalApplicationRequest extends FormRequest
                 }
             }],
             'birth_date' => ['nullable', 'date', 'after:1900-01-01', 'before_or_equal:'.now()->subYears(14)->toDateString()],
+            'zip_code' => ['nullable', 'digits:8'],
+            'neighborhood' => ['nullable', 'string', 'max:120'],
             'city' => ['required', 'string', 'max:120'],
             'state' => ['required', Rule::in(UnitRequest::STATES)],
             'professional_area' => ['required', Rule::enum(ProfessionalArea::class)],
@@ -88,7 +92,7 @@ class PortalApplicationRequest extends FormRequest
     {
         return [
             'full_name' => 'nome completo', 'social_name' => 'nome social', 'email' => 'e-mail', 'phone' => 'telefone',
-            'birth_date' => 'data de nascimento', 'city' => 'cidade', 'state' => 'UF', 'professional_area' => 'área profissional',
+            'birth_date' => 'data de nascimento', 'zip_code' => 'CEP', 'neighborhood' => 'bairro', 'city' => 'cidade', 'state' => 'UF', 'professional_area' => 'área profissional',
             'education_level' => 'escolaridade', 'desired_position' => 'cargo pretendido', 'summary' => 'resumo profissional',
             'linkedin_url' => 'LinkedIn', 'resume' => 'currículo', 'documents.*' => 'documento',
         ];
