@@ -87,8 +87,20 @@ class Candidate extends Model
             return;
         }
 
-        // Gestor de departamento: só candidatos inscritos em vagas do próprio departamento.
-        $query->whereHas('applications.jobOpening', fn (Builder $q) => $q->where('department_id', $user->department_id ?? 0));
+        $query->where(function (Builder $q) use ($user) {
+            // Gestor de departamento: candidatos inscritos em vagas do próprio departamento.
+            if ($user->can(Permission::CandidatesViewDepartment->value)) {
+                $q->whereHas('applications.jobOpening', fn (Builder $j) => $j->where('department_id', $user->department_id ?? 0));
+            }
+            // Entrevistador: candidatos que ele entrevista.
+            $q->orWhereHas('applications.interviews.interviewers', fn (Builder $i) => $i->whereKey($user->id));
+        });
+    }
+
+    /** @return HasMany<CandidateSuggestion, $this> */
+    public function suggestions(): HasMany
+    {
+        return $this->hasMany(CandidateSuggestion::class);
     }
 
     /** @return HasMany<CandidateEducation, $this> */

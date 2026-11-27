@@ -14,6 +14,7 @@ import FavoriteButton from './components/FavoriteButton.vue'
 import TagsEditor from './components/TagsEditor.vue'
 import { useAuthStore } from '@/stores/auth'
 import CandidateApplications from './components/CandidateApplications.vue'
+import CandidateSuggestions from './components/CandidateSuggestions.vue'
 import CandidateHistory from './components/CandidateHistory.vue'
 import CandidateNotes from './components/CandidateNotes.vue'
 import CandidateProfile from './components/CandidateProfile.vue'
@@ -101,6 +102,16 @@ async function remove() {
 function changed() {
   historyKey.value++
 }
+
+const suggestionsKey = ref(0)
+async function reloadAfterSuggestion() {
+  historyKey.value++
+  try {
+    candidate.value = await candidatesApi.get(route.params.id as string)
+  } catch {
+    /* mantém a ficha atual */
+  }
+}
 </script>
 
 <template>
@@ -173,7 +184,10 @@ function changed() {
       </button>
     </div>
 
-    <CandidateProfile v-if="tab === 'perfil'" :candidate="candidate" />
+    <template v-if="tab === 'perfil'">
+      <CandidateSuggestions :key="`s-${candidate.id}-${suggestionsKey}`" :candidate-id="candidate.id" @changed="reloadAfterSuggestion" />
+      <CandidateProfile :candidate="candidate" />
+    </template>
     <CandidateApplications v-else-if="tab === 'processos'" :candidate-id="candidate.id" />
     <CandidateDocuments v-else-if="tab === 'documentos'" v-model:documents="candidate.documents" :candidate="candidate" :types="options.document_types" @changed="changed" />
     <CandidateNotes v-else-if="tab === 'anotacoes'" v-model:notes="candidate.notes" :candidate="candidate" @changed="changed" />

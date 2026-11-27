@@ -7,6 +7,7 @@ use App\Domain\Candidates\Enums\DocumentType;
 use App\Models\Candidate;
 use App\Models\CandidateDocument;
 use App\Models\User;
+use App\Jobs\ReadCandidateDocument;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -52,6 +53,13 @@ class StoreCandidateDocument
                 ]);
 
                 $this->audit->log('candidate.document_uploaded', $candidate, 'Anexou '.$type->label().': '.$document->original_name, context: ['document' => $document->uuid]);
+
+                // Currículos são lidos em segundo plano para busca e sugestões (Fase 7.9).
+                if ($type === DocumentType::Resume) {
+                    $document->extraction_status = 'pending';
+                    $document->save();
+                    ReadCandidateDocument::dispatch($document->id)->afterCommit();
+                }
 
                 return $document;
             });

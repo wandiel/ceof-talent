@@ -2,6 +2,14 @@
 
 namespace App\Providers;
 
+use App\Domain\Intelligence\Contracts\CandidateProfileExtractor;
+use App\Domain\Intelligence\Contracts\DocumentTextExtractor;
+use App\Domain\Intelligence\Contracts\DuplicateDetector;
+use App\Domain\Intelligence\Contracts\JobMatchScorer;
+use App\Domain\Intelligence\Local\FinderDuplicateDetector;
+use App\Domain\Intelligence\Local\KeywordJobMatchScorer;
+use App\Domain\Intelligence\Local\KeywordProfileExtractor;
+use App\Domain\Intelligence\Local\LocalTextExtractor;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -12,7 +20,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // IA (Fase 7.9): implementações locais, trocáveis por serviços externos sem mudar o restante do sistema.
+        $this->app->bind(DocumentTextExtractor::class, LocalTextExtractor::class);
+        $this->app->bind(CandidateProfileExtractor::class, KeywordProfileExtractor::class);
+        $this->app->bind(JobMatchScorer::class, KeywordJobMatchScorer::class);
+        $this->app->bind(DuplicateDetector::class, FinderDuplicateDetector::class);
     }
 
     public function boot(): void

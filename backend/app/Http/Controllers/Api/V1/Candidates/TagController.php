@@ -6,7 +6,6 @@ use App\Domain\Audit\AuditLogger;
 use App\Domain\Candidates\Search\CandidateSearchIndex;
 use App\Domain\Identity\Enums\Permission;
 use App\Http\Controllers\Controller;
-use App\Models\Candidate;
 use App\Models\Tag;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,9 +15,10 @@ use Illuminate\Validation\Rule;
 /** Catálogo de etiquetas do banco de talentos. */
 class TagController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $this->authorize('viewAny', Candidate::class);
+        // Catálogo de etiquetas: só para quem trabalha com o banco de talentos (não para entrevistadores).
+        abort_unless($request->user()->can('candidates.view') || $request->user()->can('candidates.view_department'), 403);
 
         $tags = Tag::query()->withCount('candidates')->orderBy('name')->get();
 

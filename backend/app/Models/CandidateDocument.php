@@ -16,11 +16,11 @@ class CandidateDocument extends Model
 
     protected $fillable = ['type', 'original_name', 'path', 'mime_type', 'size', 'sha256', 'uploaded_by'];
 
-    protected $hidden = ['path'];
+    protected $hidden = ['path', 'extracted_text'];
 
     protected function casts(): array
     {
-        return ['type' => DocumentType::class, 'size' => 'integer'];
+        return ['type' => DocumentType::class, 'size' => 'integer', 'extracted_at' => 'datetime'];
     }
 
     /** @return BelongsTo<Candidate, $this> */

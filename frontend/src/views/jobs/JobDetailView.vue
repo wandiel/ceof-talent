@@ -235,6 +235,6 @@ const counts = computed(() => {
       @cancel="moving = null"
     />
     <AddCandidatesModal :open="showAdd" :job-id="job.id" :existing="applications.map((a) => a.candidate?.id ?? '')" @close="showAdd = false" @added="loadApplications" />
-    <ApplicationDrawer :application-id="openId" :can-move="!frozen && (moveAbilities.move || moveAbilities.decide)" :refresh-key="drawerKey" @close="openId = null" @move="openId = null; askMove(applications.find((x) => x.id === $event.id) ?? $event)" />
+    <ApplicationDrawer :application-id="openId" :can-move="!frozen && (moveAbilities.move || moveAbilities.decide)" :job-open="!frozen" :refresh-key="drawerKey" @changed="loadApplications" @close="openId = null" @move="openId = null; askMove(applications.find((x) => x.id === $event.id) ?? $event)" />
   </template>
 </template>

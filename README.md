@@ -53,6 +53,7 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | [04 — Cadastro de candidatos](docs/04-cadastro-candidatos.md) | regras do cadastro, anexos seguros, permissões, API |
 | [05 — Banco de currículos](docs/05-banco-curriculos.md) | busca avançada, favoritos, etiquetas, duplicidades, API |
 | [06 — Vagas e processos seletivos](docs/06-vagas-processos-seletivos.md) | ciclo e aprovação da vaga, quadro Kanban, regras de movimentação, API |
+| [07 — Entrevistas, avaliações e IA](docs/07-entrevistas-avaliacoes-ia.md) | agenda, pareceres por critérios, lembretes, leitura de currículo, sugestões e aderência |
 
 ## Status
 
@@ -64,5 +65,6 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | 4. Cadastro de candidatos | ✅ |
 | 5. Banco de currículos | ✅ |
 | 6. Vagas e processos seletivos | ✅ |
-| 7. Entrevistas e avaliações | próxima |
-| 8–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
+| 7. Entrevistas, avaliações e leitura de currículos | ✅ |
+| 8. Dashboard e relatórios | próxima |
+| 9–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |

@@ -3,14 +3,23 @@ import { onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { parseApiError } from '@/api/http'
 import { applicationsApi, type ApplicationItem } from '@/api/recruitment'
+import { formatWhen, intelligenceApi, interviewsApi, type Interview, type MatchResult } from '@/api/interviews'
+import { useAuthStore } from '@/stores/auth'
+import InterviewStatusBadge from '@/views/interviews/components/InterviewStatusBadge.vue'
+import ScheduleInterviewModal from '@/views/interviews/components/ScheduleInterviewModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { formatDate, formatPhone } from '@/utils/format'
 import StageTimeline from './StageTimeline.vue'
 
-const props = defineProps<{ applicationId: string | null; canMove: boolean; refreshKey: number }>()
-const emit = defineEmits<{ close: []; move: [application: ApplicationItem] }>()
+const props = defineProps<{ applicationId: string | null; canMove: boolean; refreshKey: number; jobOpen: boolean }>()
+const emit = defineEmits<{ close: []; move: [application: ApplicationItem]; changed: [] }>()
+const auth = useAuthStore()
 
 const application = ref<ApplicationItem | null>(null)
+const interviews = ref<Interview[]>([])
+const match = ref<MatchResult | null>(null)
+const scheduling = ref(false)
+const canSchedule = () => props.jobOpen && auth.can('interviews.schedule') && !!application.value && !['hired', 'rejected', 'withdrawn'].includes(application.value.stage)
 const loading = ref(false)
 const error = ref('')
 
@@ -19,7 +28,12 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    application.value = await applicationsApi.get(props.applicationId)
+    const id = props.applicationId
+    ;[application.value, interviews.value, match.value] = await Promise.all([
+      applicationsApi.get(id),
+      interviewsApi.forApplication(id).catch(() => []),
+      intelligenceApi.match(id).catch(() => null),
+    ])
   } catch (e) {
     error.value = parseApiError(e).message
   } finally {
@@ -81,6 +95,43 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
           </div>
 
           <section>
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-slate-900">Entrevistas</h3>
+              <BaseButton v-if="canSchedule()" size="sm" variant="secondary" @click="scheduling = true">+ Agendar</BaseButton>
+            </div>
+            <ul v-if="interviews.length" class="space-y-2">
+              <li v-for="i in interviews" :key="i.id">
+                <RouterLink :to="{ name: 'interview-detail', params: { id: i.id } }" class="block rounded-lg border border-slate-200 px-3 py-2 hover:bg-slate-50">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-slate-900">{{ i.type_label }}</span>
+                    <InterviewStatusBadge :status="i.status" :label="i.status_label" />
+                  </div>
+                  <p class="text-xs text-slate-500">{{ formatWhen(i.scheduled_at) }} · {{ (i.interviewers ?? []).map((u) => u.name).join(', ') }}</p>
+                  <p v-if="i.evaluations_count" class="text-xs text-slate-500">{{ i.evaluations_count }} parecer{{ i.evaluations_count > 1 ? 'es' : '' }}</p>
+                </RouterLink>
+              </li>
+            </ul>
+            <p v-else class="text-sm text-slate-500">Nenhuma entrevista agendada.</p>
+          </section>
+
+          <section v-if="match">
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-slate-900">Aderência à vaga <span class="font-normal text-violet-700">· sugestão automática</span></h3>
+              <span class="rounded-full px-2 py-0.5 text-sm font-semibold" :class="match.score >= 70 ? 'bg-emerald-50 text-emerald-700' : match.score >= 40 ? 'bg-amber-50 text-amber-800' : 'bg-slate-100 text-slate-700'">{{ match.score }}%</span>
+            </div>
+            <ul class="space-y-1 text-sm">
+              <li v-for="(item, idx) in match.items" :key="idx" class="flex items-start gap-2">
+                <span :class="item.matched ? 'text-emerald-600' : 'text-slate-400'" aria-hidden="true">{{ item.matched ? '✓' : '○' }}</span>
+                <span class="flex-1" :class="item.matched ? 'text-slate-800' : 'text-slate-500'">
+                  {{ item.label }}<span v-if="item.mandatory" class="text-xs text-slate-400"> (obrigatório)</span>
+                  <span class="sr-only">{{ item.matched ? 'atendido' : 'não identificado' }}</span>
+                </span>
+              </li>
+            </ul>
+            <p class="mt-2 text-xs text-slate-500">{{ match.notice }}</p>
+          </section>
+
+          <section>
             <h3 class="mb-3 text-sm font-semibold text-slate-900">Histórico de movimentações</h3>
             <StageTimeline :entries="application.history ?? []" />
           </section>
@@ -88,4 +139,12 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
       </aside>
     </div>
   </Teleport>
+  <ScheduleInterviewModal
+    :open="scheduling"
+    :application-id="applicationId"
+    :candidate-name="application?.candidate?.social_name || application?.candidate?.full_name"
+    :can-move-stage="auth.can('recruitment.move')"
+    @close="scheduling = false"
+    @saved="load(); emit('changed')"
+  />
 </template>

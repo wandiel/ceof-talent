@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
  *
  * O texto é montado a partir do cadastro e das listas relacionadas, sem acentos,
  * com o dicionário "portuguese" (plural e flexões: "enfermeiras" encontra "enfermeira").
+ * O texto lido dos currículos anexados (Fase 7.9) entra com o menor peso.
  */
 class CandidateSearchIndex
 {
@@ -26,7 +27,9 @@ class CandidateSearchIndex
                 (SELECT string_agg(concat_ws(' ', e.course, e.institution), ' ') FROM candidate_educations e WHERE e.candidate_id = c.id),
                 (SELECT string_agg(concat_ws(' ', k.name, k.institution, k.credential), ' ') FROM candidate_courses k WHERE k.candidate_id = c.id)
             ))), 'C')
-            || setweight(to_tsvector('portuguese', unaccent(concat_ws(' ', c.city, c.neighborhood))), 'D')
+            || setweight(to_tsvector('portuguese', unaccent(concat_ws(' ', c.city, c.neighborhood,
+                (SELECT left(string_agg(d.extracted_text, ' '), 300000) FROM candidate_documents d WHERE d.candidate_id = c.id AND d.extracted_text IS NOT NULL)
+            ))), 'D')
         SQL;
 
     /** @param  int|list<int>  $ids */
