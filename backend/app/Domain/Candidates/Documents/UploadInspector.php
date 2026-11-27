@@ -11,7 +11,7 @@ use ZipArchive;
  *
  * - O tipo MIME é detectado pelo conteúdo (fileinfo) e precisa corresponder à extensão.
  * - DOCX precisa ser um pacote Word válido e não pode conter macros.
- * - PDF não pode conter JavaScript nem ações de execução automática.
+ * - PDF não pode conter JavaScript, ações de execução automática nem arquivos anexados.
  */
 class UploadInspector
 {
@@ -86,9 +86,53 @@ class UploadInspector
             $this->fail($field, 'O arquivo PDF está corrompido.');
         }
 
-        if (preg_match('#/(JavaScript|JS|Launch|EmbeddedFile)\b#', $content)) {
-            $this->fail($field, 'O PDF contém conteúdo ativo (scripts ou arquivos embutidos) e foi bloqueado.');
+        $scan = $this->pdfStructure($content);
+
+        if (preg_match('#/(JavaScript|JS|Launch)(?![A-Za-z0-9])#', $scan)) {
+            $this->fail($field, 'O PDF contém scripts ou ações automáticas e foi bloqueado. Salve o currículo novamente como PDF (por exemplo, em "Imprimir > Salvar como PDF") e envie de novo.');
         }
+        if (preg_match('#/EmbeddedFiles?(?![A-Za-z0-9])#', $scan)) {
+            $this->fail($field, 'O PDF contém outros arquivos anexados dentro dele e foi bloqueado. Salve o currículo novamente como PDF (por exemplo, em "Imprimir > Salvar como PDF") e envie de novo.');
+        }
+    }
+
+    /**
+     * Estrutura do PDF (dicionários e objetos), sem o conteúdo binário das páginas, imagens e
+     * fontes — senão bytes aleatórios comprimidos podem parecer "/JS" e bloquear um PDF comum.
+     * Fluxos de objetos (/ObjStm) guardam dicionários comprimidos: esses são descomprimidos e
+     * verificados também. Nomes com escape (#4A#53 = JS) são decodificados.
+     */
+    private function pdfStructure(string $content): string
+    {
+        $parts = [];
+        $offset = 0;
+        while (preg_match('#stream\r?\n#', $content, $m, PREG_OFFSET_CAPTURE, $offset)) {
+            $start = $m[0][1];
+            $dataStart = $start + strlen($m[0][0]);
+            $end = strpos($content, 'endstream', $dataStart);
+            if ($end === false) {
+                break;
+            }
+            $before = substr($content, $offset, $start - $offset);
+            $parts[] = $before;
+
+            $dict = substr($before, max(0, strrpos($before, ' obj') ?: 0));
+            if (str_contains($dict, '/ObjStm') && str_contains($dict, '/FlateDecode')) {
+                $inflated = @gzuncompress(rtrim(substr($content, $dataStart, $end - $dataStart), "\r\n"), 20 * 1024 * 1024);
+                if ($inflated === false) {
+                    $inflated = @gzinflate(substr($content, $dataStart + 2, $end - $dataStart - 2), 20 * 1024 * 1024);
+                }
+                $parts[] = $inflated === false ? '' : $inflated;
+            }
+            $offset = $end + strlen('endstream');
+        }
+        $parts[] = substr($content, $offset);
+
+        return (string) preg_replace_callback(
+            '#/[^\s/<>\[\]()]+#',
+            fn ($n) => preg_replace_callback('/#([0-9A-Fa-f]{2})/', fn ($h) => chr(hexdec($h[1])), $n[0]),
+            implode("\n", $parts),
+        );
     }
 
     private function fail(string $field, string $message): never
