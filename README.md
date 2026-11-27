@@ -37,6 +37,7 @@ Abra **http://localhost:8080** (ou a porta definida em `APP_PORT`) e entre com e
 docker compose ps                                   # saúde dos serviços
 docker compose exec app php artisan test            # testes do backend
 ./docker/scripts/test-infrastructure.sh             # teste de persistência, backup e restauração
+./docker/scripts/homologacao.sh                     # homologação completa com relatório (Fase 11)
 ```
 
 ## Produção
@@ -64,6 +65,7 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | [08 — Dashboard e relatórios](docs/08-dashboard-relatorios.md) | indicadores, gráficos, 14 relatórios, exportação PDF/XLSX/CSV, dados de demonstração |
 | [09 — Portal público](docs/09-portal-publico.md) | Trabalhe conosco, candidatura, cadastro espontâneo, protocolo, aviso de privacidade |
 | [10 — LGPD e auditoria](docs/10-lgpd-auditoria.md) | direitos do titular, consentimentos, anonimização, retenção, trilha de auditoria |
+| [11 — Testes e homologação](docs/11-testes-homologacao.md) | roteiro de homologação, testes de segurança, testes de interface, roteiro manual |
 
 ## Status
 
@@ -79,5 +81,5 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | 8. Dashboard e relatórios | ✅ |
 | 9. Portal público (Trabalhe conosco) | ✅ |
 | 10. LGPD e auditoria | ✅ |
-| 11. Testes e homologação | próxima |
-| 12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
+| 11. Testes e homologação | ✅ |
+| 12. Documentação e nuvem | próxima |
