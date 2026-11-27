@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
+import { createRouter, createWebHistory, type RouteComponent, type RouteLocationNormalized, type RouteRecordRaw } from 'vue-router'
 import { onPasswordChangeRequired, onUnauthorized } from '@/api/http'
 import AppLayout from '@/layouts/AppLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
@@ -16,19 +16,23 @@ declare module 'vue-router' {
   }
 }
 
+function authRoute(path: string, name: string, component: RouteComponent | (() => Promise<RouteComponent>), title: string): RouteRecordRaw {
+  return {
+    path,
+    component: AuthLayout,
+    meta: { guest: true },
+    children: [{ path: '', name, component, meta: { title, guest: true } }],
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    {
-      path: '/',
-      component: AuthLayout,
-      meta: { guest: true },
-      children: [
-        { path: 'entrar', name: 'login', component: () => import('@/views/auth/LoginView.vue'), meta: { title: 'Entrar', guest: true } },
-        { path: 'esqueci-senha', name: 'forgot-password', component: () => import('@/views/auth/ForgotPasswordView.vue'), meta: { title: 'Recuperar senha', guest: true } },
-        { path: 'redefinir-senha', name: 'reset-password', component: () => import('@/views/auth/ResetPasswordView.vue'), meta: { title: 'Redefinir senha', guest: true } },
-      ],
-    },
+    // Cada tela pública tem o próprio caminho. Um registro pai em "/" com o
+    // AuthLayout casaria com a raiz e mostraria o layout vazio para visitantes.
+    authRoute('/entrar', 'login', () => import('@/views/auth/LoginView.vue'), 'Entrar'),
+    authRoute('/esqueci-senha', 'forgot-password', () => import('@/views/auth/ForgotPasswordView.vue'), 'Recuperar senha'),
+    authRoute('/redefinir-senha', 'reset-password', () => import('@/views/auth/ResetPasswordView.vue'), 'Redefinir senha'),
     {
       path: '/',
       component: AppLayout,
