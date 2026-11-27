@@ -7,7 +7,7 @@ import BrandLogo from '@/components/BrandLogo.vue'
   <div class="grid min-h-screen lg:grid-cols-2">
     <div class="flex flex-col justify-center px-6 py-12 sm:px-12">
       <div class="mx-auto w-full max-w-sm">
-        <BrandLogo class="mb-10" />
+        <BrandLogo size="lg" class="mb-10" />
         <RouterView />
       </div>
     </div>
