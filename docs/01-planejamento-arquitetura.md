@@ -135,13 +135,19 @@ backend/app/
 │   ├── Audit/               # trilha de auditoria e logs de acesso
 │   ├── Reporting/           # indicadores, dashboard, exportações
 │   └── Intelligence/        # contratos para extração/IA (Fase 7.9)
-│       └── <Módulo>/{Models,Actions,Services,Policies,Events,Jobs,Enums,Data}
+│       └── <Módulo>/{Actions,Services,Events,Jobs,Enums,Data}
+├── Models/                  # modelos Eloquent (convenção Laravel; um por tabela)
+├── Policies/                # uma Policy por modelo (descoberta automática)
 ├── Http/
-│   ├── Controllers/Api/<Módulo>/   # finos: validam (Form Request), autorizam, delegam à Action
+│   ├── Controllers/Api/V1/<Módulo>/   # finos: validam (Form Request), autorizam, delegam à Action
 │   ├── Requests/<Módulo>/          # Form Requests (validação + autorização básica)
 │   └── Resources/<Módulo>/         # API Resources (formato de saída, sem vazar campos sensíveis)
 └── Support/                         # utilitários transversais (ex.: Health)
 ```
+
+> Ajuste feito na Fase 3: os modelos Eloquent ficam em `app/Models` e as Policies em
+> `app/Policies` (descoberta automática do Laravel). `app/Domain/<Módulo>` reúne Actions,
+> Enums e serviços de cada módulo.
 
 Regras de implementação:
 
@@ -221,7 +227,7 @@ Decisões de modelagem:
 
 ## 8. Perfis e permissões
 
-Permissões granulares (`recurso.ação`) agrupadas em perfis. Matriz inicial (refinada na Fase 3):
+Permissões granulares (`recurso.ação`) agrupadas em perfis. Matriz implementada na Fase 3 em `App\Domain\Identity\Enums\Role` (fonte da verdade; a tela **Perfis** mostra a matriz real):
 
 | Permissão | Admin | Gestor RH | Analista RH | Recrutador | Gestor Depto. | Entrevistador |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
@@ -279,8 +285,8 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
 |---|---|---|---|
 | 1 | Planejamento e arquitetura | ✅ concluída | este documento |
 | 2 | Estrutura Docker e infraestrutura | ✅ concluída | `docker compose up -d --build` sobe tudo saudável; teste de infraestrutura aprovado em dev e prod |
-| 3 | Banco de dados e autenticação | ⏳ próxima | migrations base, Sanctum, perfis/permissões, criação do 1º administrador por comando, layout autenticado |
-| 4 | Cadastro de candidatos | pendente | CRUD completo com anexos privados, histórico e testes |
+| 3 | Banco de dados e autenticação | ✅ concluída (inclui unidades, departamentos e cargos, adiantados da 7.7) | migrations base, Sanctum, perfis/permissões, criação do 1º administrador por comando, layout autenticado |
+| 4 | Cadastro de candidatos | ⏳ próxima | CRUD completo com anexos privados, histórico e testes |
 | 5 | Banco de currículos | pendente | busca avançada, filtros, favoritos, etiquetas, duplicidades |
 | 6 | Vagas e processos seletivos | pendente | ciclo da vaga, Kanban, histórico de movimentações |
 | 7 | Entrevistas e avaliações | pendente | agenda, critérios, pareceres; base de IA (7.9) |

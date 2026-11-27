@@ -19,13 +19,14 @@ O que acontece na primeira subida:
 
 1. `database` inicializa o volume, cria o papel da aplicação **sem superusuário**, o banco
    principal, o banco de testes `ceof_talent_test` e as extensões de busca.
-2. `app` instala as dependências PHP se `backend/vendor` não existir, gera uma `APP_KEY` local
+2. `app` instala as dependências PHP se `backend/vendor` não existir ou se o `composer.lock` mudou, gera uma `APP_KEY` local
    (guardada em `backend/storage/app/.dev_app_key`), executa as migrations e inicia o PHP-FPM.
 3. `queue` e `scheduler` só sobem depois que `app` está saudável.
 4. `frontend` sobe o Vite com HMR; `nginx` publica tudo na porta 8080.
 
-Nenhum usuário do sistema é criado automaticamente. O primeiro administrador será criado por
-comando explícito (Fase 3).
+Nenhum usuário do sistema é criado automaticamente. O primeiro administrador é criado por
+comando explícito: `docker compose exec app php artisan ceof:create-admin` (ver
+[03 — Autenticação e permissões](03-autenticacao-permissoes.md)).
 
 ### Comandos do dia a dia
 

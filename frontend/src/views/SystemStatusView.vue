@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import BrandLogo from '@/components/BrandLogo.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
 import { fetchHealth, type HealthResponse } from '@/api/health'
 
 /**
@@ -46,56 +47,43 @@ onBeforeUnmount(() => window.clearInterval(timer))
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-10 sm:px-6">
-    <header class="flex flex-wrap items-center justify-between gap-4">
-      <BrandLogo />
-      <button
-        type="button"
-        class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-60"
-        :disabled="loading"
-        @click="load"
+  <PageHeader title="Status do sistema" subtitle="Verificação em tempo real dos componentes de infraestrutura.">
+    <template #actions>
+      <BaseButton variant="secondary" :loading="loading" @click="load">Verificar agora</BaseButton>
+    </template>
+  </PageHeader>
+
+  <section class="max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="flex items-start justify-between gap-4">
+      <p class="text-sm text-slate-500">
+        Ambiente: <strong class="font-medium text-slate-700">{{ health?.environment ?? '—' }}</strong>
+        · Última verificação: {{ checkedAt }}
+      </p>
+      <span
+        v-if="health"
+        class="rounded-full px-3 py-1 text-xs font-semibold"
+        :class="healthy ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-red-50 text-red-700 ring-1 ring-red-200'"
       >
-        {{ loading ? 'Verificando…' : 'Verificar agora' }}
-      </button>
-    </header>
+        {{ healthy ? 'Operacional' : 'Com falhas' }}
+      </span>
+    </div>
 
-    <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h1 class="text-xl font-semibold text-slate-900">Status do sistema</h1>
-          <p class="mt-1 text-sm text-slate-500">
-            Ambiente: <strong class="font-medium text-slate-700">{{ health?.environment ?? '—' }}</strong>
-            · Última verificação: {{ checkedAt }}
-          </p>
+    <p v-if="error" class="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">{{ error }}</p>
+
+    <ul v-else-if="health" class="mt-6 divide-y divide-slate-100">
+      <li v-for="(check, key) in health.checks" :key="key" class="flex items-center justify-between py-3">
+        <div class="flex items-center gap-3">
+          <span class="size-2.5 rounded-full" :class="check.status === 'ok' ? 'bg-emerald-500' : 'bg-red-500'" />
+          <span class="text-sm font-medium text-slate-800">{{ labels[key] ?? key }}</span>
         </div>
-        <span
-          v-if="health"
-          class="rounded-full px-3 py-1 text-xs font-semibold"
-          :class="healthy ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-red-50 text-red-700 ring-1 ring-red-200'"
-        >
-          {{ healthy ? 'Operacional' : 'Com falhas' }}
+        <span class="text-xs tabular-nums text-slate-500">
+          {{ check.status === 'ok' ? 'OK' : 'Falha' }} · {{ check.duration_ms }} ms
         </span>
-      </div>
+      </li>
+    </ul>
 
-      <p v-if="error" class="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700" role="alert">{{ error }}</p>
-
-      <ul v-else-if="health" class="mt-6 divide-y divide-slate-100">
-        <li v-for="(check, key) in health.checks" :key="key" class="flex items-center justify-between py-3">
-          <div class="flex items-center gap-3">
-            <span class="size-2.5 rounded-full" :class="check.status === 'ok' ? 'bg-emerald-500' : 'bg-red-500'" />
-            <span class="text-sm font-medium text-slate-800">{{ labels[key] ?? key }}</span>
-          </div>
-          <span class="text-xs tabular-nums text-slate-500">
-            {{ check.status === 'ok' ? 'OK' : 'Falha' }} · {{ check.duration_ms }} ms
-          </span>
-        </li>
-      </ul>
-
-      <div v-else class="mt-6 space-y-3" aria-busy="true">
-        <div v-for="n in 4" :key="n" class="h-10 animate-pulse rounded-lg bg-slate-100" />
-      </div>
-    </section>
-
-    <footer class="mt-auto pt-10 text-center text-xs text-slate-400">CEOF TALENT · infraestrutura Docker</footer>
-  </main>
+    <div v-else class="mt-6 space-y-3" aria-busy="true">
+      <div v-for="n in 4" :key="n" class="h-10 animate-pulse rounded-lg bg-slate-100" />
+    </div>
+  </section>
 </template>

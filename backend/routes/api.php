@@ -1,16 +1,54 @@
 <?php
 
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Auth\PasswordController;
+use App\Http\Controllers\Api\V1\Identity\RoleController;
+use App\Http\Controllers\Api\V1\Identity\UserController;
+use App\Http\Controllers\Api\V1\Organization\DepartmentController;
+use App\Http\Controllers\Api\V1\Organization\PositionController;
+use App\Http\Controllers\Api\V1\Organization\UnitController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | API REST do CEOF TALENT
 |--------------------------------------------------------------------------
-| Todas as rotas aqui recebem o prefixo /api. Versões futuras da API devem
-| ser agrupadas por prefixo (ex.: /api/v1) conforme docs/01-planejamento-arquitetura.md.
+| Prefixo /api. Rotas de negócio versionadas em /api/v1.
+| Autenticação: sessão via Laravel Sanctum (SPA na mesma origem), com
+| proteção CSRF (obter o cookie em GET /sanctum/csrf-cookie antes do login).
 */
 
 Route::get('/health', HealthController::class)
     ->middleware('throttle:60,1')
     ->name('api.health');
+
+Route::prefix('v1')->name('api.v1.')->group(function () {
+    // Rotas públicas de autenticação
+    Route::prefix('auth')->name('auth.')->middleware('throttle:auth')->group(function () {
+        Route::post('login', [AuthController::class, 'login'])->name('login');
+        Route::post('forgot-password', [PasswordController::class, 'forgot'])->name('password.forgot');
+        Route::post('reset-password', [PasswordController::class, 'reset'])->name('password.reset');
+    });
+
+    Route::middleware(['auth:sanctum', 'active'])->group(function () {
+        // Sessão do próprio usuário (liberadas mesmo com troca de senha pendente)
+        Route::prefix('auth')->name('auth.')->group(function () {
+            Route::get('me', [AuthController::class, 'me'])->name('me');
+            Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+            Route::put('password', [PasswordController::class, 'update'])->middleware('throttle:auth')->name('password.update');
+        });
+
+        Route::middleware('password.changed')->group(function () {
+            Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
+
+            Route::apiResource('users', UserController::class)->except('destroy');
+            Route::patch('users/{user}/status', [UserController::class, 'updateStatus'])->name('users.status');
+            Route::put('users/{user}/password', [UserController::class, 'resetPassword'])->name('users.password');
+
+            Route::apiResource('units', UnitController::class);
+            Route::apiResource('departments', DepartmentController::class);
+            Route::apiResource('positions', PositionController::class);
+        });
+    });
+});
