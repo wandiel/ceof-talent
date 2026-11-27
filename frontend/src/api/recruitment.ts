@@ -1,4 +1,4 @@
-import { http } from './http'
+import { cachedUntilMutation, http } from './http'
 import type { Option } from './candidates'
 import type { Paginated } from './types'
 
@@ -171,7 +171,7 @@ export interface JobListParams {
   per_page?: number
 }
 
-let optionsCache: Promise<JobOptions> | null = null
+const optionsCache = cachedUntilMutation(() => http.get<{ data: JobOptions }>('/v1/jobs/options').then((r) => r.data.data))
 
 export const PIPELINE: Stage[] = ['applied', 'screening', 'shortlisted', 'interview', 'technical', 'approved', 'hired']
 const OPEN = (s: Stage) => !['hired', 'rejected', 'withdrawn'].includes(s)
@@ -199,9 +199,7 @@ export const jobsApi = {
     return data
   },
   options(): Promise<JobOptions> {
-    optionsCache ??= http.get<{ data: JobOptions }>('/v1/jobs/options').then((r) => r.data.data)
-    optionsCache.catch(() => (optionsCache = null))
-    return optionsCache
+    return optionsCache.get()
   },
   async get(id: string): Promise<Job> {
     const { data } = await http.get<{ data: Job }>(`/v1/jobs/${id}`)

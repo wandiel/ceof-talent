@@ -1,4 +1,4 @@
-import { http } from './http'
+import { cachedUntilMutation, http } from './http'
 import type { Option } from './candidates'
 import type { Paginated } from './types'
 
@@ -103,7 +103,7 @@ export interface HistoryItem {
   created_at: string
 }
 
-let optionsCache: Promise<InterviewOptions> | null = null
+const optionsCache = cachedUntilMutation(() => http.get<{ data: InterviewOptions }>('/v1/interviews/options').then((r) => r.data.data))
 
 export const interviewsApi = {
   async list(params: InterviewListParams): Promise<Paginated<Interview>> {
@@ -114,12 +114,10 @@ export const interviewsApi = {
     return data
   },
   options(): Promise<InterviewOptions> {
-    optionsCache ??= http.get<{ data: InterviewOptions }>('/v1/interviews/options').then((r) => r.data.data)
-    optionsCache.catch(() => (optionsCache = null))
-    return optionsCache
+    return optionsCache.get()
   },
   forgetOptions() {
-    optionsCache = null
+    optionsCache.forget()
   },
   async get(id: string): Promise<Interview> {
     const { data } = await http.get<{ data: Interview }>(`/v1/interviews/${id}`)

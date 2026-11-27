@@ -32,8 +32,38 @@ export function onPasswordChangeRequired(handler: () => void) {
   passwordChangeHandler = handler
 }
 
+/**
+ * Contador de gravações bem-sucedidas (POST/PUT/PATCH/DELETE). As listas de
+ * opções guardadas em memória (departamentos, cargos, entrevistadores...)
+ * são recarregadas quando ele muda, para que um cadastro novo apareça nos
+ * formulários sem precisar recarregar a página.
+ */
+let mutationVersion = 0
+
+/** Guarda o resultado de `load` até a próxima gravação feita pela aplicação. */
+export function cachedUntilMutation<T>(load: () => Promise<T>): { get: () => Promise<T>; forget: () => void } {
+  let cache: Promise<T> | null = null
+  let version = -1
+  return {
+    get() {
+      if (!cache || version !== mutationVersion) {
+        version = mutationVersion
+        cache = load()
+        cache.catch(() => (cache = null))
+      }
+      return cache
+    },
+    forget() {
+      cache = null
+    },
+  }
+}
+
 http.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (!['get', 'head', 'options'].includes((response.config.method ?? 'get').toLowerCase())) mutationVersion++
+    return response
+  },
   async (error: AxiosError<{ code?: string }>) => {
     const status = error.response?.status
     const config = error.config as RetriableConfig | undefined
