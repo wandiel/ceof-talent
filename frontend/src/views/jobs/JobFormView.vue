@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MoneyInput from '@/components/ui/MoneyInput.vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { parseApiError } from '@/api/http'
@@ -191,10 +192,10 @@ onBeforeRouteLeave(() => {
           </select>
         </FormField>
         <FormField class="sm:col-span-2" label="Salário de (R$)" for="j-smin" :error="err('salary_min')">
-          <input id="j-smin" v-model="form.salary_min" type="number" min="0" step="0.01" :class="inputClass(err('salary_min'))" />
+          <MoneyInput id="j-smin" v-model="form.salary_min" :input-class="inputClass(err('salary_min'))" />
         </FormField>
         <FormField class="sm:col-span-2" label="Salário até (R$)" for="j-smax" :error="err('salary_max')">
-          <input id="j-smax" v-model="form.salary_max" type="number" min="0" step="0.01" :class="inputClass(err('salary_max'))" />
+          <MoneyInput id="j-smax" v-model="form.salary_max" :input-class="inputClass(err('salary_max'))" />
         </FormField>
         <FormField class="sm:col-span-2" label="Inscrições até" for="j-closes" :error="err('closes_on')">
           <input id="j-closes" v-model="form.closes_on" type="date" :min="today" :class="inputClass(err('closes_on'))" />

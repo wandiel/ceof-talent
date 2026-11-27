@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MoneyInput from '@/components/ui/MoneyInput.vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { candidatesApi, talentPoolApi, type CandidateOptions, type CandidatePayload, type DuplicateMatch } from '@/api/candidates'
@@ -259,7 +260,7 @@ const maxMonth = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2,
           <input id="c-position" v-model="form.desired_position" type="text" maxlength="150" :class="inputClass(err('desired_position'))" />
         </FormField>
         <FormField label="Pretensão salarial (R$)" for="c-salary" :error="err('salary_expectation')">
-          <input id="c-salary" v-model="form.salary_expectation" type="number" min="0" step="0.01" :class="inputClass(err('salary_expectation'))" />
+          <MoneyInput id="c-salary" v-model="form.salary_expectation" :input-class="inputClass(err('salary_expectation'))" />
         </FormField>
         <FormField label="Disponibilidade para início" for="c-avail" :error="err('availability')">
           <select id="c-avail" v-model="form.availability" :class="inputClass(err('availability'))">

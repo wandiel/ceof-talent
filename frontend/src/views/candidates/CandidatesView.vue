@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MoneyInput from '@/components/ui/MoneyInput.vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { candidatesApi, type CandidateListItem, type CandidateOptions } from '@/api/candidates'
@@ -226,7 +227,7 @@ function open(candidate: CandidateListItem) {
           </select>
         </FormField>
         <FormField label="Pretensão salarial até (R$)" for="f-salary">
-          <input id="f-salary" v-model="draft.salary_max" type="number" min="0" step="100" :class="inputClass()" />
+          <MoneyInput id="f-salary" :model-value="(draft.salary_max as string | undefined) ?? null" @update:model-value="draft.salary_max = $event ?? undefined" :input-class="inputClass()" />
         </FormField>
         <FormField label="Idade" for="f-age-min">
           <div class="flex items-center gap-2">
