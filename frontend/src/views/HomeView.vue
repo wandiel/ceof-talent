@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { navigation } from '@/layouts/navigation'
 import { useAuthStore } from '@/stores/auth'
+import DashboardPanel from '@/views/reports/DashboardPanel.vue'
 
 const auth = useAuthStore()
 
@@ -19,7 +20,7 @@ const lastLogin = computed(() => (auth.user?.last_login_at ? new Date(auth.user.
 </script>
 
 <template>
-  <section class="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-800 p-6 text-white shadow-sm sm:p-8">
+  <section class="rounded-2xl bg-gradient-to-r from-brand-700 to-brand-800 p-6 text-white shadow-sm">
     <p class="text-sm text-brand-100">{{ greeting }},</p>
     <h1 class="mt-1 text-2xl font-semibold sm:text-3xl">{{ auth.user?.name }}</h1>
     <p class="mt-3 text-sm text-brand-100">
@@ -30,7 +31,9 @@ const lastLogin = computed(() => (auth.user?.last_login_at ? new Date(auth.user.
     <p class="mt-1 text-xs text-brand-200">Último acesso registrado: {{ lastLogin }}</p>
   </section>
 
-  <section class="mt-8">
+  <DashboardPanel v-if="auth.can('dashboard.view')" />
+
+  <section v-else class="mt-8">
     <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500">Acesso rápido</h2>
     <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <RouterLink

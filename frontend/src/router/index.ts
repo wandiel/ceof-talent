@@ -39,6 +39,7 @@ const router = createRouter({
       meta: { auth: true },
       children: [
         { path: '', name: 'home', component: () => import('@/views/HomeView.vue'), meta: { title: 'Início' } },
+        { path: 'relatorios', name: 'reports', component: () => import('@/views/reports/ReportsView.vue'), meta: { title: 'Relatórios', permission: 'reports.view' } },
         { path: 'minha-conta/senha', name: 'change-password', component: () => import('@/views/auth/ChangePasswordView.vue'), meta: { title: 'Alterar senha' } },
         { path: 'usuarios', name: 'users', component: () => import('@/views/users/UsersView.vue'), meta: { title: 'Usuários', permission: 'users.view' } },
         { path: 'perfis', name: 'roles', component: () => import('@/views/users/RolesView.vue'), meta: { title: 'Perfis de acesso', permission: 'roles.view' } },
