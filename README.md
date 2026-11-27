@@ -50,6 +50,7 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | [01 — Planejamento e arquitetura](docs/01-planejamento-arquitetura.md) | decisões técnicas, módulos, modelo de dados, permissões, roadmap |
 | [02 — Infraestrutura Docker](docs/02-infraestrutura-docker.md) | serviços, execução, produção, backup/restauração, testes |
 | [03 — Autenticação e permissões](docs/03-autenticacao-permissoes.md) | login, senhas, perfis, usuários, estrutura organizacional, API |
+| [04 — Cadastro de candidatos](docs/04-cadastro-candidatos.md) | regras do cadastro, anexos seguros, permissões, API |
 
 ## Status
 
@@ -58,5 +59,6 @@ Veja HTTPS, atualização, backup e recuperação de desastres em
 | 1. Planejamento e arquitetura | ✅ |
 | 2. Estrutura Docker e infraestrutura | ✅ |
 | 3. Banco de dados e autenticação | ✅ |
-| 4. Cadastro de candidatos | próxima |
-| 5–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |
+| 4. Cadastro de candidatos | ✅ |
+| 5. Banco de currículos | próxima |
+| 6–12 | ver [roadmap](docs/01-planejamento-arquitetura.md#11-roadmap-e-status-das-fases) |

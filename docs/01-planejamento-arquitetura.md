@@ -286,8 +286,8 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
 | 1 | Planejamento e arquitetura | ✅ concluída | este documento |
 | 2 | Estrutura Docker e infraestrutura | ✅ concluída | `docker compose up -d --build` sobe tudo saudável; teste de infraestrutura aprovado em dev e prod |
 | 3 | Banco de dados e autenticação | ✅ concluída (inclui unidades, departamentos e cargos, adiantados da 7.7) | migrations base, Sanctum, perfis/permissões, criação do 1º administrador por comando, layout autenticado |
-| 4 | Cadastro de candidatos | ⏳ próxima | CRUD completo com anexos privados, histórico e testes |
-| 5 | Banco de currículos | pendente | busca avançada, filtros, favoritos, etiquetas, duplicidades |
+| 4 | Cadastro de candidatos | ✅ concluída | CRUD completo com anexos privados, histórico e testes |
+| 5 | Banco de currículos | ⏳ próxima | busca avançada, filtros, favoritos, etiquetas, duplicidades |
 | 6 | Vagas e processos seletivos | pendente | ciclo da vaga, Kanban, histórico de movimentações |
 | 7 | Entrevistas e avaliações | pendente | agenda, critérios, pareceres; base de IA (7.9) |
 | 8 | Dashboard e relatórios | pendente | indicadores reais, exportação PDF/XLSX/CSV |
@@ -302,7 +302,7 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
   `ceof_talent_test`, criado automaticamente pelo container do banco. O `phpunit.xml` força as
   variáveis de teste para impedir qualquer execução contra o banco principal.
 - **API, autenticação, permissões, uploads e processos**: testes de feature por módulo.
-- **Frontend**: checagem de tipos (`vue-tsc`) no build; testes de componentes a partir da Fase 4.
+- **Frontend**: checagem de tipos (`vue-tsc`) no build e validação das telas no navegador a cada fase; suíte automatizada de testes de interface na Fase 11.
 - **Infraestrutura**: `docker/scripts/test-infrastructure.sh` valida subida, recriação dos
   containers sem perda, backup, restauração, isolamento de rede e execução sem root.
 

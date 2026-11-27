@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\V1\Candidates\CandidateController;
+use App\Http\Controllers\Api\V1\Candidates\CandidateDocumentController;
+use App\Http\Controllers\Api\V1\Candidates\CandidateNoteController;
+use App\Http\Controllers\Api\V1\Candidates\SkillController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\PasswordController;
 use App\Http\Controllers\Api\V1\Identity\RoleController;
@@ -49,6 +53,17 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::apiResource('units', UnitController::class);
             Route::apiResource('departments', DepartmentController::class);
             Route::apiResource('positions', PositionController::class);
+
+            // Candidatos (Fase 4)
+            Route::get('candidates/options', [CandidateController::class, 'options'])->name('candidates.options');
+            Route::apiResource('candidates', CandidateController::class);
+            Route::patch('candidates/{candidate}/status', [CandidateController::class, 'updateStatus'])->name('candidates.status');
+            Route::get('candidates/{candidate}/history', [CandidateController::class, 'history'])->name('candidates.history');
+            Route::post('candidates/{candidate}/notes', [CandidateNoteController::class, 'store'])->name('candidates.notes.store');
+            Route::post('candidates/{candidate}/documents', [CandidateDocumentController::class, 'store'])->middleware('throttle:uploads')->name('candidates.documents.store');
+            Route::get('candidates/{candidate}/documents/{document}', [CandidateDocumentController::class, 'download'])->name('candidates.documents.download');
+            Route::delete('candidates/{candidate}/documents/{document}', [CandidateDocumentController::class, 'destroy'])->name('candidates.documents.destroy');
+            Route::get('skills', [SkillController::class, 'index'])->name('skills.index');
         });
     });
 });
