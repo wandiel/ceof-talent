@@ -1,0 +1,29 @@
+# Contexto de build: raiz do repositório. Mantém as imagens enxutas e
+# impede que segredos e dados locais entrem nas camadas.
+.git
+.github
+.env
+.env.*
+!.env.example
+**/.DS_Store
+**/*.log
+
+backups/
+docs/
+docker/nginx/certs/*.pem
+
+backend/vendor/
+backend/.env
+backend/storage/app/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/framework/testing/*
+backend/storage/logs/*
+backend/bootstrap/cache/*.php
+backend/.phpunit.cache
+backend/.phpunit.result.cache
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

@@ -1,0 +1,295 @@
+# =============================================================================
+# CEOF TALENT — ambiente de PRODUÇÃO
+#
+#   cp .env.example .env    # e preencha TODOS os segredos (obrigatórios)
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Diferenças em relação ao desenvolvimento:
+#   - código e dependências embutidos nas imagens (sem bind mount de código)
+#   - HTTPS obrigatório (Nginx 443) e redirecionamento de HTTP
+#   - banco e Redis em rede interna, SEM portas publicadas
+#   - segredos obrigatórios: o Compose recusa subir sem eles
+#   - documentos em volume nomeado persistente (app_storage)
+#
+# NUNCA use "down -v" em produção: isso apaga os volumes de dados.
+# =============================================================================
+name: ceof-talent-prod
+
+x-backend-env: &backend-env
+  APP_NAME: ${APP_NAME:-CEOF TALENT}
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_KEY: ${APP_KEY:?defina APP_KEY no .env}
+  APP_URL: ${APP_URL:?defina APP_URL no .env}
+  APP_TIMEZONE: ${APP_TIMEZONE:-America/Manaus}
+  APP_LOCALE: ${APP_LOCALE:-pt_BR}
+  LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  DB_CONNECTION: pgsql
+  DB_HOST: database
+  DB_PORT: 5432
+  DB_DATABASE: ${DB_DATABASE:-ceof_talent}
+  DB_USERNAME: ${DB_USERNAME:-ceof_talent}
+  DB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+  REDIS_CLIENT: phpredis
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}
+  CACHE_STORE: redis
+  QUEUE_CONNECTION: redis
+  SESSION_DRIVER: redis
+  SESSION_SECURE_COOKIE: "true"
+  SESSION_ENCRYPT: "true"
+  FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+  AWS_BUCKET: ${AWS_BUCKET:-}
+  AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+  AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-false}
+  MAIL_MAILER: ${MAIL_MAILER:-smtp}
+  MAIL_HOST: ${MAIL_HOST:-}
+  MAIL_PORT: ${MAIL_PORT:-587}
+  MAIL_USERNAME: ${MAIL_USERNAME:-}
+  MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+  MAIL_SCHEME: ${MAIL_SCHEME:-}
+  MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:?defina MAIL_FROM_ADDRESS no .env}
+  MAIL_FROM_NAME: ${APP_NAME:-CEOF TALENT}
+
+x-backend-build: &backend-build
+  context: .
+  dockerfile: docker/php/Dockerfile
+  target: prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+services:
+  app:
+    build: *backend-build
+    image: ${IMAGE_PREFIX:-ceof-talent}/backend:${IMAGE_TAG:-latest-local}
+    command: ["app"]
+    environment:
+      <<: *backend-env
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      SEED_REFERENCE_DATA: ${SEED_REFERENCE_DATA:-true}
+    volumes:
+      - app_storage:/var/www/html/storage/app
+    depends_on:
+      database: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "ceof-healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    restart: always
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/www/html/storage/framework:uid=33,gid=33
+      - /var/www/html/storage/logs:uid=33,gid=33
+      - /var/www/html/bootstrap/cache:uid=33,gid=33
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *logging
+    networks: [internal, edge]
+
+  queue:
+    image: ${IMAGE_PREFIX:-ceof-talent}/backend:${IMAGE_TAG:-latest-local}
+    command: ["queue"]
+    environment: *backend-env
+    volumes:
+      - app_storage:/var/www/html/storage/app
+    depends_on:
+      app: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "ceof-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: always
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/www/html/storage/framework:uid=33,gid=33
+      - /var/www/html/storage/logs:uid=33,gid=33
+      - /var/www/html/bootstrap/cache:uid=33,gid=33
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *logging
+    # "edge" dá saída à internet (SMTP, S3, futuras integrações de IA).
+    networks: [internal, edge]
+
+  scheduler:
+    image: ${IMAGE_PREFIX:-ceof-talent}/backend:${IMAGE_TAG:-latest-local}
+    command: ["scheduler"]
+    environment: *backend-env
+    volumes:
+      - app_storage:/var/www/html/storage/app
+    depends_on:
+      app: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "ceof-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: always
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/www/html/storage/framework:uid=33,gid=33
+      - /var/www/html/storage/logs:uid=33,gid=33
+      - /var/www/html/bootstrap/cache:uid=33,gid=33
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *logging
+    networks: [internal, edge]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+      target: prod
+    image: ${IMAGE_PREFIX:-ceof-talent}/frontend:${IMAGE_TAG:-latest-local}
+    restart: always
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *logging
+    networks: [edge]
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    image: ${IMAGE_PREFIX:-ceof-talent}/nginx:${IMAGE_TAG:-latest-local}
+    environment:
+      SERVER_NAME: ${SERVER_NAME:?defina SERVER_NAME no .env}
+    ports:
+      - "${HTTP_PORT:-80}:8080"
+      - "${HTTPS_PORT:-443}:8443"
+    volumes:
+      - ./docker/nginx/templates/prod:/etc/nginx/templates:ro
+      - ${TLS_CERTS_DIR:-./docker/nginx/certs}:/etc/nginx/certs:ro
+      - certbot_webroot:/var/www/certbot:ro
+    depends_on:
+      app: { condition: service_healthy }
+      frontend: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/nginx-health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: always
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *logging
+    networks: [edge]
+
+  database:
+    image: postgres:17.10-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?defina POSTGRES_SUPERUSER_PASSWORD no .env}
+      POSTGRES_DB: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+      APP_DB_NAME: ${DB_DATABASE:-ceof_talent}
+      APP_DB_USER: ${DB_USERNAME:-ceof_talent}
+      APP_DB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+      TZ: ${APP_TIMEZONE:-America/Manaus}
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
+    # Sem "ports": o banco nunca é exposto fora da rede Docker interna.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $${APP_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    shm_size: 256mb
+    restart: always
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+    networks: [internal]
+
+  redis:
+    image: redis:7.4.12-alpine
+    command: ["sh", "-c", "exec redis-server /usr/local/etc/redis/redis.conf --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: always
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+    networks: [internal]
+
+  backup:
+    build:
+      context: .
+      dockerfile: docker/backup/Dockerfile
+    image: ${IMAGE_PREFIX:-ceof-talent}/backup:${IMAGE_TAG:-latest-local}
+    environment: &backup-env
+      PGHOST: database
+      PGDATABASE: ${DB_DATABASE:-ceof_talent}
+      PGUSER: ${DB_USERNAME:-ceof_talent}
+      PGPASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+      TZ: ${APP_TIMEZONE:-America/Manaus}
+      BACKUP_ENABLED: ${BACKUP_ENABLED:-true}
+      BACKUP_TIME: ${BACKUP_TIME:-02:00}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - ${BACKUP_HOST_DIR:-./backups}:/backups
+      - app_storage:/data/storage:ro
+    depends_on:
+      database: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f backup-scheduler >/dev/null || pgrep -f 'tail -f /dev/null' >/dev/null"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    restart: always
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+    # "edge" permite o hook de exportação para armazenamento externo (S3/rclone).
+    networks: [internal, edge]
+
+  # Restauração sob demanda (profile "tools"). Procedimento em docs/02-infraestrutura-docker.md.
+  restore:
+    image: ${IMAGE_PREFIX:-ceof-talent}/backup:${IMAGE_TAG:-latest-local}
+    profiles: ["tools"]
+    entrypoint: ["restore"]
+    environment:
+      <<: *backup-env
+      STORAGE_OWNER: "33:33"
+    volumes:
+      - ${BACKUP_HOST_DIR:-./backups}:/backups:ro
+      - app_storage:/data/storage
+    depends_on:
+      database: { condition: service_healthy }
+    networks: [internal]
+
+networks:
+  edge: {}
+  internal:
+    internal: true
+
+volumes:
+  postgres_data:
+  redis_data:
+  app_storage:
+  certbot_webroot:

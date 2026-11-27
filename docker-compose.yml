@@ -1,0 +1,244 @@
+# =============================================================================
+# CEOF TALENT — ambiente de DESENVOLVIMENTO
+#
+#   cp .env.example .env      # opcional: há valores padrão seguros para dev
+#   docker compose up -d --build
+#   http://localhost:8080
+#
+# Produção: docker-compose.prod.yml (ver docs/02-infraestrutura-docker.md)
+# =============================================================================
+name: ceof-talent
+
+x-backend-env: &backend-env
+  APP_NAME: ${APP_NAME:-CEOF TALENT}
+  APP_ENV: ${APP_ENV:-local}
+  APP_DEBUG: ${APP_DEBUG:-true}
+  APP_KEY: ${APP_KEY:-}
+  APP_URL: ${APP_URL:-http://localhost:8080}
+  APP_TIMEZONE: ${APP_TIMEZONE:-America/Manaus}
+  APP_LOCALE: ${APP_LOCALE:-pt_BR}
+  LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
+  LOG_LEVEL: ${LOG_LEVEL:-debug}
+  DB_CONNECTION: pgsql
+  DB_HOST: database
+  DB_PORT: 5432
+  DB_DATABASE: ${DB_DATABASE:-ceof_talent}
+  DB_USERNAME: ${DB_USERNAME:-ceof_talent}
+  DB_PASSWORD: ${DB_PASSWORD:-ceof_talent_dev}
+  REDIS_CLIENT: phpredis
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-ceof_redis_dev}
+  CACHE_STORE: redis
+  QUEUE_CONNECTION: redis
+  SESSION_DRIVER: redis
+  SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-false}
+  FILESYSTEM_DISK: local
+  MAIL_MAILER: ${MAIL_MAILER:-log}
+  MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-nao-responda@ceoftalent.local}
+  MAIL_FROM_NAME: ${APP_NAME:-CEOF TALENT}
+
+x-backend-build: &backend-build
+  context: .
+  dockerfile: docker/php/Dockerfile
+  target: dev
+  args:
+    UID: ${HOST_UID:-1000}
+    GID: ${HOST_GID:-1000}
+
+services:
+  app:
+    build: *backend-build
+    image: ceof-talent/backend:dev
+    command: ["app"]
+    environment:
+      <<: *backend-env
+      RUN_MIGRATIONS: "true"
+      SEED_REFERENCE_DATA: ${SEED_REFERENCE_DATA:-true}
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      database: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "ceof-healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
+    networks: [internal, edge]
+
+  queue:
+    image: ceof-talent/backend:dev
+    command: ["queue"]
+    environment: *backend-env
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      app: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "ceof-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks: [internal]
+
+  scheduler:
+    image: ceof-talent/backend:dev
+    command: ["scheduler"]
+    environment: *backend-env
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      app: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "ceof-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks: [internal]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+      target: dev
+    image: ceof-talent/frontend:dev
+    environment:
+      VITE_HMR_CLIENT_PORT: ${APP_PORT:-8080}
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    networks: [edge]
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    image: ceof-talent/nginx:dev
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - ./docker/nginx/templates/dev:/etc/nginx/templates:ro
+    depends_on:
+      app: { condition: service_healthy }
+      frontend: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/nginx-health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks: [edge, internal]
+
+  database:
+    image: postgres:17.10-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:-ceof_postgres_dev}
+      POSTGRES_DB: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+      APP_DB_NAME: ${DB_DATABASE:-ceof_talent}
+      APP_DB_USER: ${DB_USERNAME:-ceof_talent}
+      APP_DB_PASSWORD: ${DB_PASSWORD:-ceof_talent_dev}
+      TZ: ${APP_TIMEZONE:-America/Manaus}
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
+    # Exposto apenas em 127.0.0.1 para ferramentas locais (DBeaver, psql).
+    # Em produção esta porta NÃO é publicada.
+    ports:
+      - "127.0.0.1:${DB_FORWARD_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $${APP_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    shm_size: 256mb
+    restart: unless-stopped
+    networks: [internal]
+
+  redis:
+    image: redis:7.4.12-alpine
+    command: ["sh", "-c", "exec redis-server /usr/local/etc/redis/redis.conf --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-ceof_redis_dev}
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [internal]
+
+  backup:
+    build:
+      context: .
+      dockerfile: docker/backup/Dockerfile
+    image: ceof-talent/backup:dev
+    environment: &backup-env
+      PGHOST: database
+      PGDATABASE: ${DB_DATABASE:-ceof_talent}
+      PGUSER: ${DB_USERNAME:-ceof_talent}
+      PGPASSWORD: ${DB_PASSWORD:-ceof_talent_dev}
+      TZ: ${APP_TIMEZONE:-America/Manaus}
+      BACKUP_ENABLED: ${BACKUP_ENABLED:-false}
+      BACKUP_TIME: ${BACKUP_TIME:-02:00}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - ${BACKUP_HOST_DIR:-./backups}:/backups
+      - ./backend/storage/app:/data/storage:ro
+    depends_on:
+      database: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f backup-scheduler >/dev/null || pgrep -f 'tail -f /dev/null' >/dev/null"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks: [internal]
+
+  # Ferramenta sob demanda (não sobe com "up"). Uso:
+  #   docker compose stop app queue scheduler
+  #   docker compose run --rm restore latest --yes
+  #   docker compose start app queue scheduler
+  restore:
+    image: ceof-talent/backup:dev
+    profiles: ["tools"]
+    entrypoint: ["restore"]
+    environment:
+      <<: *backup-env
+      STORAGE_OWNER: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    volumes:
+      - ${BACKUP_HOST_DIR:-./backups}:/backups:ro
+      - ./backend/storage/app:/data/storage
+    depends_on:
+      database: { condition: service_healthy }
+    networks: [internal]
+
+networks:
+  # edge: tráfego HTTP (nginx <-> frontend/app)
+  edge: {}
+  # internal: banco, cache e filas. Em produção é "internal: true" (sem saída
+  # para a internet). Em dev fica normal para permitir o acesso local ao banco.
+  internal: {}
+
+volumes:
+  postgres_data:
+  redis_data:
+  frontend_node_modules:
