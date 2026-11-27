@@ -11,7 +11,6 @@ use App\Models\CandidateDocument;
 use App\Models\PrivacyRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -92,8 +91,8 @@ class AnonymizeCandidate
 
         // Arquivos só saem do disco depois que o banco confirmou.
         foreach ($paths as $path) {
-            Storage::disk(CandidateDocument::DISK)->delete($path);
+            CandidateDocument::storage()->delete($path);
         }
-        Storage::disk(CandidateDocument::DISK)->deleteDirectory('candidates/'.$candidate->uuid);
+        CandidateDocument::storage()->deleteDirectory('candidates/'.$candidate->uuid);
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Support\Health;
 
+use App\Models\CandidateDocument;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -96,7 +96,8 @@ class HealthChecker
 
     private function checkStorage(): void
     {
-        $disk = Storage::disk('local');
+        // Disco dos documentos: o volume privado ou o bucket S3.
+        $disk = CandidateDocument::storage();
         $path = '.health/'.Str::uuid().'.txt';
 
         $disk->put($path, 'ok');
@@ -104,7 +105,7 @@ class HealthChecker
         $disk->delete($path);
 
         if ($content !== 'ok') {
-            throw new \RuntimeException('Armazenamento privado não está gravável.');
+            throw new \RuntimeException('Armazenamento de documentos ('.CandidateDocument::diskName().') não está gravável.');
         }
     }
 }

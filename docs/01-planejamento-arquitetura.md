@@ -294,7 +294,7 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
 | 9 | Portal público | ✅ concluída | trabalhe conosco, candidatura, consentimento, confirmação |
 | 10 | LGPD e auditoria | ✅ concluída | retenção, direitos do titular, trilha de auditoria completa |
 | 11 | Testes e homologação | ✅ concluída | suíte completa aprovada, testes de segurança e de restauração |
-| 12 | Documentação e nuvem | ⏳ próxima | manuais, OpenAPI, implantação em VPS/cloud, backup externo S3 |
+| 12 | Documentação e nuvem | ✅ concluída | manuais, OpenAPI, implantação em VPS/cloud, backup externo S3 |
 
 ## 12. Estratégia de testes
 
@@ -315,6 +315,6 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
 | Fuso horário | padrão `America/Manaus` (configurável por `APP_TIMEZONE`) |
 | Idioma | interface e mensagens em português do Brasil |
 | Volume de currículos | busca no PostgreSQL (GIN/trigram) atende dezenas de milhares de currículos; motor externo de busca só se necessário |
-| Armazenamento | disco local (volume) por padrão; S3 compatível ativável por variável sem mudança de código |
+| Armazenamento | disco local (volume) por padrão; S3 compatível ativável por variável (`FILESYSTEM_DISK=s3`), com backup e restauração do bucket (Fase 12) |
 | E-mail | `log` em desenvolvimento; SMTP configurável em produção |
-| Hospedagem futura | VPS Linux com Docker; documentação na Fase 12 |
+| Hospedagem futura | VPS Linux com Docker; ver `docs/manuais/implantacao-na-nuvem.md` |

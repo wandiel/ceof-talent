@@ -1,4 +1,4 @@
-import { http } from './http'
+import { cachedUntilMutation, http } from './http'
 import type { ListParams, Paginated } from './types'
 
 export interface Option {
@@ -175,7 +175,7 @@ function clean(params: ListParams): ListParams {
   return Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '' && v !== undefined && v !== null)) as ListParams
 }
 
-let optionsCache: Promise<CandidateOptions> | null = null
+const optionsCache = cachedUntilMutation(() => http.get<{ data: CandidateOptions }>('/v1/candidates/options').then((r) => r.data.data))
 
 export const candidatesApi = {
   async list(params: ListParams = {}): Promise<Paginated<CandidateListItem>> {
@@ -183,12 +183,10 @@ export const candidatesApi = {
     return data
   },
   forgetOptions() {
-    optionsCache = null
+    optionsCache.forget()
   },
   options(): Promise<CandidateOptions> {
-    optionsCache ??= http.get<{ data: CandidateOptions }>('/v1/candidates/options').then((r) => r.data.data)
-    optionsCache.catch(() => (optionsCache = null))
-    return optionsCache
+    return optionsCache.get()
   },
   async get(id: string): Promise<Candidate> {
     const { data } = await http.get<{ data: Candidate }>(`/v1/candidates/${id}`)

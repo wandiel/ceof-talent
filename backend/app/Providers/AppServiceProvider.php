@@ -42,6 +42,8 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(10)->by('portal-m:'.$request->ip()),
             Limit::perDay(60)->by('portal-d:'.$request->ip()),
         ]);
+        // Consulta de CEP: o portal é público, então o limite é por IP.
+        RateLimiter::for('cep', fn (Request $request) => Limit::perMinute(30)->by('cep:'.($request->user()?->id ?: $request->ip())));
         RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)->by('uploads:'.($request->user()?->id ?: $request->ip())));
     }
 }

@@ -71,3 +71,21 @@ export function formatExperience(months: number | null | undefined): string {
   const parts = [years ? `${years} ano${years > 1 ? 's' : ''}` : '', rest ? `${rest} ${rest > 1 ? 'meses' : 'mês'}` : ''].filter(Boolean)
   return parts.join(' e ')
 }
+
+/**
+ * Converte um valor digitado no formato brasileiro em número:
+ * "1.500" → 1500, "1.500,50" → 1500.5, "1500,5" → 1500.5, "1500.50" → 1500.5.
+ */
+export function parseMoney(text: string): number | null {
+  let t = text.replace(/[^\d.,]/g, '')
+  if (!t) return null
+  if (t.includes(',')) {
+    t = t.replace(/\./g, '').replace(',', '.').replace(/,/g, '')
+  } else if (/^\d+\.\d{1,2}$/.test(t)) {
+    // "1500.5" / "1500.50": ponto como decimal (sem vírgula e com 1–2 casas).
+  } else {
+    t = t.replace(/\./g, '') // "1.500" / "1.500.000": pontos de milhar
+  }
+  const n = Number(t)
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : null
+}

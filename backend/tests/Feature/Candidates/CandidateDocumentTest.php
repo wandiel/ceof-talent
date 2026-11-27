@@ -21,8 +21,34 @@ class CandidateDocumentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake(CandidateDocument::DISK);
+        Storage::fake(CandidateDocument::diskName());
         $this->candidate = Candidate::factory()->create();
+    }
+
+    public function test_pdf_with_js_like_bytes_inside_page_content_is_accepted(): void
+    {
+        $this->actingAsRole(Role::HrAnalyst);
+        // Bytes de imagem/fonte comprimidos podem conter "/JS" por acaso: não é script.
+        $binary = "\x8f\x12/JS \x00\xff/Launch\x01/EmbeddedFile\x02";
+        $this->upload($this->pdf('comum.pdf', '2 0 obj << /Length '.strlen($binary)." /Filter /DCTDecode >>\nstream\n{$binary}\nendstream\nendobj"))
+            ->assertCreated();
+    }
+
+    public function test_pdf_with_content_credentials_seal_is_accepted(): void
+    {
+        $this->actingAsRole(Role::HrAnalyst);
+        // Selo C2PA ("Content Credentials") anexado por editores e ferramentas de IA: é só metadado.
+        $manifest = "\x00\x00jumb\x00jumdc2pa";
+        $this->upload($this->pdf('c2pa.pdf', "5 0 obj << /Type /Catalog /AF [10 0 R] /Names << /EmbeddedFiles << /Names [(Content Credentials) 10 0 R] >> >> >> endobj\n"
+            .'9 0 obj << /Length '.strlen($manifest)." /Type /EmbeddedFile /Subtype /application#2Fc2pa >>\nstream\n{$manifest}\nendstream\nendobj\n"
+            .'10 0 obj << /AFRelationship /C2PA_Manifest /EF << /F 9 0 R >> /Subtype (application/c2pa) /Type /Filespec >> endobj'))
+            ->assertCreated();
+
+        // Outro tipo de anexo continua bloqueado, mesmo ao lado de um selo C2PA.
+        $this->upload($this->pdf('c2pa-e-exe.pdf', "5 0 obj << /Names << /EmbeddedFiles << /Names [(a) 9 0 R (b) 11 0 R] >> >> >> endobj\n"
+            ."9 0 obj << /Length 4 /Type /EmbeddedFile /Subtype /application#2Fc2pa >>\nstream\nabcd\nendstream\nendobj\n"
+            ."11 0 obj << /Length 4 /Type /EmbeddedFile /Subtype /application#2Fx-msdownload >>\nstream\nMZ00\nendstream\nendobj"))
+            ->assertUnprocessable();
     }
 
     private function pdf(string $name = 'curriculo.pdf', string $extra = ''): UploadedFile
@@ -66,7 +92,7 @@ class CandidateDocumentTest extends TestCase
         $document = CandidateDocument::query()->where('uuid', $id)->firstOrFail();
         $this->assertStringStartsWith('candidates/'.$this->candidate->uuid.'/', $document->path);
         $this->assertStringNotContainsString('Maria', $document->path);
-        Storage::disk(CandidateDocument::DISK)->assertExists($document->path);
+        Storage::disk(CandidateDocument::diskName())->assertExists($document->path);
 
         $download = $this->get("/api/v1/candidates/{$this->candidate->uuid}/documents/{$id}")->assertOk();
         $this->assertStringContainsString('attachment', (string) $download->headers->get('Content-Disposition'));
@@ -75,7 +101,7 @@ class CandidateDocumentTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['event' => 'candidate.document_downloaded']);
 
         $this->deleteJson("/api/v1/candidates/{$this->candidate->uuid}/documents/{$id}")->assertNoContent();
-        Storage::disk(CandidateDocument::DISK)->assertMissing($document->path);
+        Storage::disk(CandidateDocument::diskName())->assertMissing($document->path);
         $this->assertDatabaseHas('audit_logs', ['event' => 'candidate.document_deleted']);
     }
 
@@ -99,8 +125,18 @@ class CandidateDocumentTest extends TestCase
         $this->upload(UploadedFile::fake()->createWithContent('curriculo.pdf', "MZ\x90\x00\x03\x00\x00\x00 executable"))
             ->assertUnprocessable()->assertJsonPath('errors.file.0', 'O conteúdo do arquivo não corresponde à extensão .pdf.');
 
+        $script = 'O PDF contém scripts ou ações automáticas e foi bloqueado. Salve o currículo novamente como PDF (por exemplo, em "Imprimir > Salvar como PDF") e envie de novo.';
         $this->upload($this->pdf('script.pdf', '2 0 obj << /S /JavaScript /JS (app.alert(1)) >> endobj'))
-            ->assertUnprocessable()->assertJsonPath('errors.file.0', 'O PDF contém conteúdo ativo (scripts ou arquivos embutidos) e foi bloqueado.');
+            ->assertUnprocessable()->assertJsonPath('errors.file.0', $script);
+        // Nome com escape (#4A#53 = JS) também é reconhecido.
+        $this->upload($this->pdf('escape.pdf', '2 0 obj << /S /JavaScript /#4A#53 (app.alert(1)) >> endobj'))
+            ->assertUnprocessable()->assertJsonPath('errors.file.0', $script);
+        // Script escondido dentro de um fluxo de objetos comprimido.
+        $hidden = gzcompress('3 0 << /S /JavaScript /JS (app.alert(1)) >>');
+        $this->upload($this->pdf('objstm.pdf', '2 0 obj << /Type /ObjStm /N 1 /First 4 /Filter /FlateDecode /Length '.strlen($hidden)." >>\nstream\n{$hidden}\nendstream\nendobj"))
+            ->assertUnprocessable()->assertJsonPath('errors.file.0', $script);
+        $this->upload($this->pdf('anexo.pdf', '2 0 obj << /Names << /EmbeddedFiles 3 0 R >> >> endobj'))
+            ->assertUnprocessable()->assertJsonPath('errors.file.0', 'O PDF contém outros arquivos anexados dentro dele e foi bloqueado. Salve o currículo novamente como PDF (por exemplo, em "Imprimir > Salvar como PDF") e envie de novo.');
 
         $this->upload($this->docx(withMacro: true))
             ->assertUnprocessable()->assertJsonPath('errors.file.0', 'Documentos com macros não são aceitos.');
@@ -109,7 +145,7 @@ class CandidateDocumentTest extends TestCase
             ->assertUnprocessable()->assertJsonPath('errors.file.0', 'O arquivo deve ter no máximo 10 MB.');
 
         $this->assertSame(0, CandidateDocument::query()->count());
-        $this->assertSame([], Storage::disk(CandidateDocument::DISK)->allFiles());
+        $this->assertSame([], Storage::disk(CandidateDocument::diskName())->allFiles());
     }
 
     public function test_same_file_cannot_be_attached_twice(): void
@@ -133,7 +169,7 @@ class CandidateDocumentTest extends TestCase
     private function storedDocument(): CandidateDocument
     {
         $path = 'candidates/'.$this->candidate->uuid.'/arquivo.pdf';
-        Storage::disk(CandidateDocument::DISK)->put($path, '%PDF-1.4');
+        Storage::disk(CandidateDocument::diskName())->put($path, '%PDF-1.4');
 
         return $this->candidate->documents()->create([
             'type' => 'resume', 'original_name' => 'cv.pdf', 'path' => $path,

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import MoneyInput from '@/components/ui/MoneyInput.vue'
+import { useCepAutofill } from '@/composables/useCepAutofill'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { candidatesApi, talentPoolApi, type CandidateOptions, type CandidatePayload, type DuplicateMatch } from '@/api/candidates'
@@ -35,12 +37,14 @@ function emptyPayload(): CandidatePayload {
 }
 
 const form = reactive<CandidatePayload>(emptyPayload())
+const cep = useCepAutofill(() => form.zip_code, form)
 
 onMounted(async () => {
   try {
     options.value = await candidatesApi.options()
     if (id.value) {
       const c = await candidatesApi.get(id.value)
+      cep.prime(c.zip_code)
       Object.assign(form, {
         ...emptyPayload(),
         ...Object.fromEntries(Object.keys(emptyPayload()).map((k) => [k, (c as unknown as Record<string, unknown>)[k]])),
@@ -225,6 +229,7 @@ const maxMonth = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2,
       <div class="grid gap-4 sm:grid-cols-6">
         <FormField label="CEP" for="c-cep" :error="err('zip_code')" class="sm:col-span-2">
           <input id="c-cep" :value="form.zip_code ?? ''" type="text" inputmode="numeric" placeholder="00000-000" :class="inputClass(err('zip_code'))" @input="form.zip_code = maskCep(($event.target as HTMLInputElement).value)" />
+          <p v-if="cep.message.value && !err('zip_code')" class="mt-1 text-xs" :class="cep.status.value === 'not_found' ? 'text-amber-700' : 'text-slate-500'" data-testid="cep-status">{{ cep.message.value }}</p>
         </FormField>
         <FormField label="Bairro" for="c-neigh" :error="err('neighborhood')" class="sm:col-span-4">
           <input id="c-neigh" v-model="form.neighborhood" type="text" maxlength="120" :class="inputClass(err('neighborhood'))" />
@@ -259,7 +264,7 @@ const maxMonth = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2,
           <input id="c-position" v-model="form.desired_position" type="text" maxlength="150" :class="inputClass(err('desired_position'))" />
         </FormField>
         <FormField label="Pretensão salarial (R$)" for="c-salary" :error="err('salary_expectation')">
-          <input id="c-salary" v-model="form.salary_expectation" type="number" min="0" step="0.01" :class="inputClass(err('salary_expectation'))" />
+          <MoneyInput id="c-salary" v-model="form.salary_expectation" :input-class="inputClass(err('salary_expectation'))" />
         </FormField>
         <FormField label="Disponibilidade para início" for="c-avail" :error="err('availability')">
           <select id="c-avail" v-model="form.availability" :class="inputClass(err('availability'))">

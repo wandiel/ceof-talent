@@ -4,13 +4,12 @@ namespace App\Domain\Candidates\Documents;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Candidates\Enums\DocumentType;
+use App\Jobs\ReadCandidateDocument;
 use App\Models\Candidate;
 use App\Models\CandidateDocument;
 use App\Models\User;
-use App\Jobs\ReadCandidateDocument;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -38,7 +37,7 @@ class StoreCandidateDocument
         }
 
         $path = 'candidates/'.$candidate->uuid.'/'.Str::random(40).'.'.$info['extension'];
-        Storage::disk(CandidateDocument::DISK)->putFileAs(dirname($path), $file, basename($path));
+        CandidateDocument::storage()->putFileAs(dirname($path), $file, basename($path));
 
         try {
             return DB::transaction(function () use ($candidate, $file, $type, $actor, $info, $sha256, $path) {
@@ -64,7 +63,7 @@ class StoreCandidateDocument
                 return $document;
             });
         } catch (\Throwable $e) {
-            Storage::disk(CandidateDocument::DISK)->delete($path);
+            CandidateDocument::storage()->delete($path);
             throw $e;
         }
     }

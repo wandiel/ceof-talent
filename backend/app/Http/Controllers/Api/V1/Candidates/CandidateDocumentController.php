@@ -13,7 +13,6 @@ use App\Models\CandidateDocument;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -41,7 +40,7 @@ class CandidateDocumentController extends Controller
         $this->ensureBelongs($candidate, $document);
         $this->authorize('downloadDocuments', $candidate);
 
-        $disk = Storage::disk(CandidateDocument::DISK);
+        $disk = CandidateDocument::storage();
         abort_unless($disk->exists($document->path), 404, 'Arquivo não encontrado no armazenamento.');
 
         $audit->log('candidate.document_downloaded', $candidate, 'Baixou '.$document->type->label().': '.$document->original_name, context: ['document' => $document->uuid]);
@@ -59,7 +58,7 @@ class CandidateDocumentController extends Controller
         $this->authorize('update', $candidate);
 
         $document->delete();
-        Storage::disk(CandidateDocument::DISK)->delete($document->path);
+        CandidateDocument::storage()->delete($document->path);
         $audit->log('candidate.document_deleted', $candidate, 'Removeu '.$document->type->label().': '.$document->original_name, context: ['document' => $document->uuid]);
 
         return response()->noContent();

@@ -6,6 +6,7 @@ use App\Domain\Candidates\Documents\UploadInspector;
 use App\Domain\Candidates\Enums\EducationLevel;
 use App\Domain\Candidates\Enums\ProfessionalArea;
 use App\Domain\Portal\Actions\SubmitPortalApplication;
+use App\Domain\Portal\Address\CepLookup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Organization\UnitRequest;
 use App\Http\Requests\Portal\PortalApplicationRequest;
@@ -57,6 +58,16 @@ class PortalController extends Controller
     public function privacy(): JsonResponse
     {
         return response()->json(['data' => $this->privacyData()]);
+    }
+
+    /** Endereço pelo CEP (cidade, UF, bairro e logradouro), para preencher os formulários. */
+    public function cep(string $cep, CepLookup $lookup): JsonResponse
+    {
+        $address = $lookup->find($cep);
+
+        return $address
+            ? response()->json(['data' => $address])
+            : response()->json(['message' => 'CEP não encontrado. Preencha a cidade e a UF.'], 404);
     }
 
     public function submit(PortalApplicationRequest $request, SubmitPortalApplication $submit): JsonResponse
