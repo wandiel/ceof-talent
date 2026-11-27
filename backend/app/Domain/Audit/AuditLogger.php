@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 class AuditLogger
 {
     /** @var list<string> */
-    private const REDACTED = ['password', 'password_confirmation', 'current_password', 'remember_token', 'token'];
+    private const REDACTED = ['password', 'password_confirmation', 'current_password', 'remember_token', 'token', 'cpf', 'cpf_hash'];
 
     /**
      * @param  array<string, mixed>|null  $old

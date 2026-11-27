@@ -25,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
 
         // API autenticada: limite por usuário (ou IP, se anônimo).
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(300)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('uploads', fn (Request $request) => Limit::perMinute(30)->by('uploads:'.($request->user()?->id ?: $request->ip())));
     }
 }

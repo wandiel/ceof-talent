@@ -12,7 +12,7 @@ declare module 'vue-router' {
     /** Rota só para visitantes (ex.: login). */
     guest?: boolean
     /** Permissão necessária para acessar a rota. */
-    permission?: string
+    permission?: string | string[]
   }
 }
 
@@ -45,6 +45,10 @@ const router = createRouter({
         { path: 'unidades', name: 'units', component: () => import('@/views/organization/UnitsView.vue'), meta: { title: 'Unidades', permission: 'organization.view' } },
         { path: 'departamentos', name: 'departments', component: () => import('@/views/organization/DepartmentsView.vue'), meta: { title: 'Departamentos', permission: 'organization.view' } },
         { path: 'cargos', name: 'positions', component: () => import('@/views/organization/PositionsView.vue'), meta: { title: 'Cargos', permission: 'organization.view' } },
+        { path: 'candidatos', name: 'candidates', component: () => import('@/views/candidates/CandidatesView.vue'), meta: { title: 'Candidatos', permission: ['candidates.view', 'candidates.view_department'] } },
+        { path: 'candidatos/novo', name: 'candidate-create', component: () => import('@/views/candidates/CandidateFormView.vue'), meta: { title: 'Novo candidato', permission: 'candidates.manage' } },
+        { path: 'candidatos/:id', name: 'candidate-detail', component: () => import('@/views/candidates/CandidateDetailView.vue'), meta: { title: 'Candidato', permission: ['candidates.view', 'candidates.view_department'] } },
+        { path: 'candidatos/:id/editar', name: 'candidate-edit', component: () => import('@/views/candidates/CandidateFormView.vue'), meta: { title: 'Editar candidato', permission: 'candidates.manage' } },
         { path: 'status', name: 'system-status', component: () => import('@/views/SystemStatusView.vue'), meta: { title: 'Status do sistema' } },
         { path: 'acesso-negado', name: 'forbidden', component: () => import('@/views/ForbiddenView.vue'), meta: { title: 'Acesso negado' } },
       ],
