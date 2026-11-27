@@ -30,7 +30,19 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'is_active' => true,
+            'must_change_password' => false,
         ];
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn () => ['is_active' => false]);
+    }
+
+    public function withRole(\App\Domain\Identity\Enums\Role $role): static
+    {
+        return $this->afterCreating(fn (\App\Models\User $user) => $user->assignRole($role->value));
     }
 
     /**

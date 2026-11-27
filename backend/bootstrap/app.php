@@ -16,6 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Nginx é o único ponto de entrada; confia nos cabeçalhos X-Forwarded-*
         // enviados por ele para identificar HTTPS e o IP real do cliente.
         $middleware->trustProxies(at: '*');
+
+        // SPA na mesma origem: sessão com cookie HttpOnly + CSRF (Sanctum).
+        $middleware->statefulApi();
+
+        $middleware->alias([
+            'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+            'password.changed' => \App\Http\Middleware\EnsurePasswordIsChanged::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

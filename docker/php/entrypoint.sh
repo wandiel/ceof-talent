@@ -21,14 +21,23 @@ log() { printf '[ceof-entrypoint] %s\n' "$*" >&2; }
 is_production() { [ "${APP_ENV:-production}" = "production" ]; }
 
 ensure_dependencies() {
-  if [ ! -f vendor/autoload.php ]; then
-    if command -v composer >/dev/null 2>&1; then
-      log "vendor/ ausente: executando composer install"
-      composer install --no-interaction --prefer-dist --no-progress
-    else
-      log "ERRO: vendor/ ausente e Composer indisponível nesta imagem."
-      exit 1
-    fi
+  # Reinstala quando vendor/ não existe ou quando o composer.lock mudou
+  # (ex.: atualização do código que adicionou pacotes).
+  local marker=vendor/.composer-lock.sha256
+  local current
+  current="$(sha256sum composer.lock | cut -d' ' -f1)"
+
+  if [ -f vendor/autoload.php ] && [ -f "$marker" ] && [ "$(cat "$marker")" = "$current" ]; then
+    return
+  fi
+
+  if command -v composer >/dev/null 2>&1; then
+    log "Dependências PHP ausentes ou desatualizadas: executando composer install"
+    composer install --no-interaction --prefer-dist --no-progress
+    echo "$current" > "$marker"
+  elif [ ! -f vendor/autoload.php ]; then
+    log "ERRO: vendor/ ausente e Composer indisponível nesta imagem."
+    exit 1
   fi
 }
 
