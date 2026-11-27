@@ -9,6 +9,10 @@ import StatusBadge from '@/components/ui/StatusBadge.vue'
 import { useToastStore } from '@/stores/toast'
 import { formatDate, formatDateTime, formatMoney, formatPhone } from '@/utils/format'
 import CandidateDocuments from './components/CandidateDocuments.vue'
+import DuplicateAlert from './components/DuplicateAlert.vue'
+import FavoriteButton from './components/FavoriteButton.vue'
+import TagsEditor from './components/TagsEditor.vue'
+import { useAuthStore } from '@/stores/auth'
 import CandidateHistory from './components/CandidateHistory.vue'
 import CandidateNotes from './components/CandidateNotes.vue'
 import CandidateProfile from './components/CandidateProfile.vue'
@@ -16,6 +20,7 @@ import CandidateProfile from './components/CandidateProfile.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const auth = useAuthStore()
 
 const candidate = ref<Candidate | null>(null)
 const options = ref<CandidateOptions | null>(null)
@@ -105,7 +110,7 @@ function changed() {
   </div>
 
   <template v-else-if="candidate && options">
-    <button type="button" class="mb-3 text-sm text-slate-500 hover:text-slate-800" @click="router.push({ name: 'candidates' })">← Candidatos</button>
+    <button type="button" class="mb-3 text-sm text-slate-500 hover:text-slate-800" @click="router.push({ name: 'candidates' })">← Banco de talentos</button>
 
     <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -116,6 +121,7 @@ function changed() {
           <div>
             <div class="flex flex-wrap items-center gap-2">
               <h1 class="text-xl font-semibold text-slate-900">{{ candidate.social_name || candidate.full_name }}</h1>
+              <FavoriteButton v-if="candidate.abilities.manage_talent_pool" v-model="candidate.is_favorite" :candidate-id="candidate.id" size="md" />
               <StatusBadge :active="candidate.status === 'active'" />
             </div>
             <p v-if="candidate.social_name" class="text-xs text-slate-500">Nome civil: {{ candidate.full_name }}</p>
@@ -127,6 +133,7 @@ function changed() {
               <span v-if="candidate.phone">{{ formatPhone(candidate.phone) }}</span>
               <span v-if="candidate.city">{{ candidate.city }}{{ candidate.state ? '/' + candidate.state : '' }}</span>
             </p>
+            <TagsEditor v-if="candidate.tags" v-model="candidate.tags" class="mt-2" :candidate-id="candidate.id" :editable="candidate.abilities.manage_talent_pool" @changed="changed" />
           </div>
         </div>
         <div v-if="candidate.abilities.update || candidate.abilities.delete" class="flex flex-wrap gap-2">
@@ -144,6 +151,8 @@ function changed() {
         <div><dt class="text-xs text-slate-500">Cadastrado em</dt><dd class="font-medium text-slate-800">{{ formatDate(candidate.created_at) }} · {{ candidate.source_label }}</dd></div>
       </dl>
     </div>
+
+    <DuplicateAlert v-if="auth.can('candidates.view')" :key="candidate.id" :candidate-id="candidate.id" :can-dismiss="candidate.abilities.update" @changed="changed" />
 
     <div class="mb-4 flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist">
       <button

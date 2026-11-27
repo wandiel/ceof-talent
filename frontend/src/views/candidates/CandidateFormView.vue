@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
-import { candidatesApi, type CandidateOptions, type CandidatePayload } from '@/api/candidates'
+import { candidatesApi, talentPoolApi, type CandidateOptions, type CandidatePayload, type DuplicateMatch } from '@/api/candidates'
 import { parseApiError } from '@/api/http'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import FormField from '@/components/ui/FormField.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import { inputClass } from '@/components/ui/inputClass'
 import { useToastStore } from '@/stores/toast'
-import { maskCep, maskCpf, maskPhone } from '@/utils/format'
+import { formatPhone, maskCep, maskCpf, maskPhone } from '@/utils/format'
 import FormSection from './components/FormSection.vue'
 import SkillsInput from './components/SkillsInput.vue'
 
@@ -81,6 +81,21 @@ watch(
   },
   { deep: true },
 )
+
+// Aviso de possível duplicidade enquanto o cadastro é digitado (não impede salvar).
+const duplicates = ref<DuplicateMatch[]>([])
+let lastCheck = ''
+async function checkDuplicates() {
+  const payload = { full_name: form.full_name, email: form.email, phone: form.phone, phone_secondary: form.phone_secondary, cpf: form.cpf, birth_date: form.birth_date, ignore: id.value }
+  const key = JSON.stringify(payload)
+  if (key === lastCheck) return
+  lastCheck = key
+  try {
+    duplicates.value = await talentPoolApi.checkDuplicates(payload)
+  } catch {
+    duplicates.value = []
+  }
+}
 
 function err(key: string): string | undefined {
   return errors.value[key]
@@ -158,19 +173,30 @@ const maxMonth = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2,
   <form v-else-if="options" class="space-y-6 pb-24" novalidate @submit.prevent="submit" @input="dirty = true" @change="dirty = true">
     <p v-if="message" class="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200" role="alert">{{ message }}</p>
 
+    <div v-if="duplicates.length" class="rounded-2xl border border-amber-300 bg-amber-50 p-4" role="status" data-testid="duplicate-warning">
+      <p class="font-medium text-amber-900">Já pode existir um cadastro desta pessoa</p>
+      <p class="text-sm text-amber-800">Confira antes de continuar. Os links abrem em outra aba.</p>
+      <ul class="mt-2 space-y-1 text-sm">
+        <li v-for="d in duplicates" :key="d.candidate.id">
+          <a :href="router.resolve({ name: 'candidate-detail', params: { id: d.candidate.id } }).href" target="_blank" rel="noopener" class="font-medium text-amber-900 underline">{{ d.candidate.full_name }}</a>
+          <span class="text-amber-800"> · {{ d.candidate.email || formatPhone(d.candidate.phone) || 'sem contato' }} · {{ d.reasons.join(', ') }}</span>
+        </li>
+      </ul>
+    </div>
+
     <FormSection title="Dados pessoais" description="Coletamos apenas o necessário para o processo seletivo (LGPD).">
       <div class="grid gap-4 sm:grid-cols-2">
         <FormField label="Nome completo" for="c-name" :error="err('full_name')" required class="sm:col-span-2">
-          <input id="c-name" v-model="form.full_name" type="text" maxlength="150" autocomplete="off" :class="inputClass(err('full_name'))" />
+          <input id="c-name" @blur="checkDuplicates" v-model="form.full_name" type="text" maxlength="150" autocomplete="off" :class="inputClass(err('full_name'))" />
         </FormField>
         <FormField label="Nome social" for="c-social" :error="err('social_name')" hint="Como a pessoa prefere ser chamada.">
           <input id="c-social" v-model="form.social_name" type="text" maxlength="150" :class="inputClass(err('social_name'))" />
         </FormField>
         <FormField label="Data de nascimento" for="c-birth" :error="err('birth_date')">
-          <input id="c-birth" v-model="form.birth_date" type="date" :class="inputClass(err('birth_date'))" />
+          <input id="c-birth" @blur="checkDuplicates" v-model="form.birth_date" type="date" :class="inputClass(err('birth_date'))" />
         </FormField>
         <FormField label="CPF" for="c-cpf" :error="err('cpf')" hint="Opcional. Guardado criptografado; usado para evitar cadastros duplicados.">
-          <input id="c-cpf" :value="form.cpf ?? ''" type="text" inputmode="numeric" placeholder="000.000.000-00" :class="inputClass(err('cpf'))" @input="form.cpf = maskCpf(($event.target as HTMLInputElement).value)" />
+          <input id="c-cpf" @blur="checkDuplicates" :value="form.cpf ?? ''" type="text" inputmode="numeric" placeholder="000.000.000-00" :class="inputClass(err('cpf'))" @input="form.cpf = maskCpf(($event.target as HTMLInputElement).value)" />
         </FormField>
       </div>
     </FormSection>
@@ -178,13 +204,13 @@ const maxMonth = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2,
     <FormSection title="Contato">
       <div class="grid gap-4 sm:grid-cols-2">
         <FormField label="E-mail" for="c-email" :error="err('email')">
-          <input id="c-email" v-model="form.email" type="email" maxlength="191" :class="inputClass(err('email'))" />
+          <input id="c-email" @blur="checkDuplicates" v-model="form.email" type="email" maxlength="191" :class="inputClass(err('email'))" />
         </FormField>
         <FormField label="Telefone / WhatsApp" for="c-phone" :error="err('phone')">
-          <input id="c-phone" :value="form.phone ?? ''" type="tel" inputmode="numeric" placeholder="(92) 99999-9999" :class="inputClass(err('phone'))" @input="form.phone = maskPhone(($event.target as HTMLInputElement).value)" />
+          <input id="c-phone" @blur="checkDuplicates" :value="form.phone ?? ''" type="tel" inputmode="numeric" placeholder="(92) 99999-9999" :class="inputClass(err('phone'))" @input="form.phone = maskPhone(($event.target as HTMLInputElement).value)" />
         </FormField>
         <FormField label="Telefone secundário" for="c-phone2" :error="err('phone_secondary')">
-          <input id="c-phone2" :value="form.phone_secondary ?? ''" type="tel" inputmode="numeric" :class="inputClass(err('phone_secondary'))" @input="form.phone_secondary = maskPhone(($event.target as HTMLInputElement).value)" />
+          <input id="c-phone2" @blur="checkDuplicates" :value="form.phone_secondary ?? ''" type="tel" inputmode="numeric" :class="inputClass(err('phone_secondary'))" @input="form.phone_secondary = maskPhone(($event.target as HTMLInputElement).value)" />
         </FormField>
         <FormField label="LinkedIn" for="c-linkedin" :error="err('linkedin_url')">
           <input id="c-linkedin" v-model="form.linkedin_url" type="url" placeholder="https://www.linkedin.com/in/…" :class="inputClass(err('linkedin_url'))" />

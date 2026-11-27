@@ -33,6 +33,10 @@ class CandidateListResource extends JsonResource
             'source_label' => $this->source?->label(),
             'status' => $this->status?->value,
             'documents_count' => $this->whenCounted('documents'),
+            'experience_months' => $this->when(array_key_exists('experience_months', $this->getAttributes()), fn () => (int) $this->getAttribute('experience_months')),
+            'is_favorite' => $this->when(array_key_exists('is_favorite', $this->getAttributes()), fn () => (bool) $this->getAttribute('is_favorite')),
+            'tags' => $this->whenLoaded('tags', fn () => $this->tags->map(fn ($t) => ['id' => $t->uuid, 'name' => $t->name, 'color' => $t->color])),
+            'skills_preview' => $this->when($this->relationLoaded('skills') && ! $request->routeIs('api.v1.candidates.show', 'api.v1.candidates.store', 'api.v1.candidates.update', 'api.v1.candidates.status'), fn () => $this->skills->pluck('name')->take(8)->values()),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

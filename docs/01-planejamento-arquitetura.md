@@ -287,8 +287,8 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
 | 2 | Estrutura Docker e infraestrutura | ✅ concluída | `docker compose up -d --build` sobe tudo saudável; teste de infraestrutura aprovado em dev e prod |
 | 3 | Banco de dados e autenticação | ✅ concluída (inclui unidades, departamentos e cargos, adiantados da 7.7) | migrations base, Sanctum, perfis/permissões, criação do 1º administrador por comando, layout autenticado |
 | 4 | Cadastro de candidatos | ✅ concluída | CRUD completo com anexos privados, histórico e testes |
-| 5 | Banco de currículos | ⏳ próxima | busca avançada, filtros, favoritos, etiquetas, duplicidades |
-| 6 | Vagas e processos seletivos | pendente | ciclo da vaga, Kanban, histórico de movimentações |
+| 5 | Banco de currículos | ✅ concluída | busca avançada, filtros, favoritos, etiquetas, duplicidades |
+| 6 | Vagas e processos seletivos | ⏳ próxima | ciclo da vaga, Kanban, histórico de movimentações |
 | 7 | Entrevistas e avaliações | pendente | agenda, critérios, pareceres; base de IA (7.9) |
 | 8 | Dashboard e relatórios | pendente | indicadores reais, exportação PDF/XLSX/CSV |
 | 9 | Portal público | pendente | trabalhe conosco, candidatura, consentimento, confirmação |

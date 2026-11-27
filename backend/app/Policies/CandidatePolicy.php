@@ -49,4 +49,16 @@ class CandidatePolicy
     {
         return $actor->can(Permission::CandidatesDownloadDocuments->value) && $this->view($actor, $candidate);
     }
+
+    /** Favoritos e etiquetas. */
+    public function manageTalentPool(User $actor, Candidate $candidate): bool
+    {
+        return $actor->can(Permission::TalentPoolManage->value) && $this->view($actor, $candidate);
+    }
+
+    /** Duplicidades envolvem o banco inteiro: só para quem vê todos os candidatos. */
+    public function reviewDuplicates(User $actor): bool
+    {
+        return $actor->can(Permission::CandidatesView->value);
+    }
 }

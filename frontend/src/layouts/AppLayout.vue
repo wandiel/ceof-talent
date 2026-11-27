@@ -34,8 +34,17 @@ watch(() => route.fullPath, () => {
   userMenuOpen.value = false
 })
 
+// Item ativo: o de caminho mais longo que corresponde à rota atual
+// (ex.: /candidatos/duplicidades não deixa "Banco de talentos" ativo).
+const activeTo = computed(() =>
+  navigation
+    .flatMap((s) => s.items.map((i) => i.to))
+    .filter((to) => (to === '/' ? route.path === '/' : route.path === to || route.path.startsWith(`${to}/`)))
+    .sort((a, b) => b.length - a.length)[0],
+)
+
 function isActive(to: string) {
-  return to === '/' ? route.path === '/' : route.path.startsWith(to)
+  return activeTo.value === to
 }
 
 async function logout() {
