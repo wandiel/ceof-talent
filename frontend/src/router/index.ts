@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteComponent, type RouteLocation
 import { onPasswordChangeRequired, onUnauthorized } from '@/api/http'
 import AppLayout from '@/layouts/AppLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
+import PublicLayout from '@/layouts/PublicLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 
 declare module 'vue-router' {
@@ -30,6 +31,22 @@ const router = createRouter({
   routes: [
     // Cada tela pública tem o próprio caminho. Um registro pai em "/" com o
     // AuthLayout casaria com a raiz e mostraria o layout vazio para visitantes.
+    // Portal público "Trabalhe conosco" e aviso de privacidade (sem login).
+    {
+      path: '/trabalhe-conosco',
+      component: PublicLayout,
+      children: [
+        { path: '', name: 'portal', component: () => import('@/views/portal/PortalJobsView.vue'), meta: { title: 'Trabalhe conosco' } },
+        { path: 'vagas/:id', name: 'portal-job', component: () => import('@/views/portal/PortalJobView.vue'), meta: { title: 'Vaga' } },
+        { path: 'cadastro', name: 'portal-apply', component: () => import('@/views/portal/PortalApplyView.vue'), meta: { title: 'Enviar currículo' } },
+        { path: 'confirmacao', name: 'portal-receipt', component: () => import('@/views/portal/PortalReceiptView.vue'), meta: { title: 'Currículo recebido' } },
+      ],
+    },
+    {
+      path: '/privacidade',
+      component: PublicLayout,
+      children: [{ path: '', name: 'privacy', component: () => import('@/views/portal/PrivacyView.vue'), meta: { title: 'Aviso de privacidade' } }],
+    },
     authRoute('/entrar', 'login', () => import('@/views/auth/LoginView.vue'), 'Entrar'),
     authRoute('/esqueci-senha', 'forgot-password', () => import('@/views/auth/ForgotPasswordView.vue'), 'Recuperar senha'),
     authRoute('/redefinir-senha', 'reset-password', () => import('@/views/auth/ResetPasswordView.vue'), 'Redefinir senha'),

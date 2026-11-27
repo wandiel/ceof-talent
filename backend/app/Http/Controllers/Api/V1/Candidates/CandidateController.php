@@ -196,6 +196,7 @@ class CandidateController extends Controller
         'interview.evaluated' => 'Parecer de entrevista',
         'candidate.suggestion_reviewed' => 'Sugestão automática revisada',
         'candidate.document_read' => 'Currículo lido automaticamente',
+        'candidate.portal_submission' => 'Envio pelo portal Trabalhe conosco',
     ];
 
     private function loadDetail(Candidate $candidate): Candidate

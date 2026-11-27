@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\Interviews\InterviewController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\UnitController;
+use App\Http\Controllers\Api\V1\Portal\PortalController;
 use App\Http\Controllers\Api\V1\Recruitment\ApplicationController;
 use App\Http\Controllers\Api\V1\Recruitment\JobOpeningController;
 use App\Http\Controllers\Api\V1\Reports\DashboardController;
@@ -42,6 +43,17 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->name('login');
         Route::post('forgot-password', [PasswordController::class, 'forgot'])->name('password.forgot');
         Route::post('reset-password', [PasswordController::class, 'reset'])->name('password.reset');
+    });
+
+    // Portal "Trabalhe conosco" (Fase 9): público, sem login
+    Route::prefix('public')->name('public.')->group(function () {
+        Route::middleware('throttle:120,1')->group(function () {
+            Route::get('jobs', [PortalController::class, 'jobs'])->name('jobs.index');
+            Route::get('jobs/{job}', [PortalController::class, 'job'])->name('jobs.show')->whereUuid('job');
+            Route::get('options', [PortalController::class, 'options'])->name('options');
+            Route::get('privacy', [PortalController::class, 'privacy'])->name('privacy');
+        });
+        Route::post('applications', [PortalController::class, 'submit'])->middleware('throttle:portal')->name('applications.store');
     });
 
     Route::middleware(['auth:sanctum', 'active'])->group(function () {

@@ -145,6 +145,18 @@ class Candidate extends Model
         return $this->hasMany(Application::class);
     }
 
+    /** @return HasMany<CandidateConsent, $this> */
+    public function consents(): HasMany
+    {
+        return $this->hasMany(CandidateConsent::class)->latest('granted_at');
+    }
+
+    /** @return HasMany<PortalSubmission, $this> */
+    public function portalSubmissions(): HasMany
+    {
+        return $this->hasMany(PortalSubmission::class)->latest('id');
+    }
+
     /** @return HasMany<CandidateDocument, $this> */
     public function documents(): HasMany
     {
