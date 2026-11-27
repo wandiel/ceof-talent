@@ -112,9 +112,10 @@ class UserManagementTest extends TestCase
 
     public function test_listing_supports_search_filters_and_pagination(): void
     {
-        $this->actingAsRole(Role::Admin, ['name' => 'Zé Admin']);
+        // E-mails fixos: os gerados aleatoriamente podem conter "souza" e quebrar a busca.
+        $this->actingAsRole(Role::Admin, ['name' => 'Zé Admin', 'email' => 'ze@ceof.test']);
         $this->userWithRole(Role::Recruiter, ['name' => 'Beatriz Souza', 'email' => 'bia@ceof.test']);
-        $this->userWithRole(Role::Interviewer, ['name' => 'Carlos Lima', 'is_active' => false]);
+        $this->userWithRole(Role::Interviewer, ['name' => 'Carlos Lima', 'email' => 'carlos@ceof.test', 'is_active' => false]);
 
         $this->getJson('/api/v1/users?search=souza')
             ->assertOk()

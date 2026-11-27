@@ -13,6 +13,7 @@ import DuplicateAlert from './components/DuplicateAlert.vue'
 import FavoriteButton from './components/FavoriteButton.vue'
 import TagsEditor from './components/TagsEditor.vue'
 import { useAuthStore } from '@/stores/auth'
+import CandidateApplications from './components/CandidateApplications.vue'
 import CandidateHistory from './components/CandidateHistory.vue'
 import CandidateNotes from './components/CandidateNotes.vue'
 import CandidateProfile from './components/CandidateProfile.vue'
@@ -30,13 +31,15 @@ const confirm = ref<'status' | 'delete' | null>(null)
 const acting = ref(false)
 const historyKey = ref(0)
 
-const tabs = [
+const allTabs = [
   { key: 'perfil', label: 'Perfil' },
+  { key: 'processos', label: 'Processos' },
   { key: 'documentos', label: 'Documentos' },
   { key: 'anotacoes', label: 'Anotações' },
   { key: 'historico', label: 'Histórico' },
 ] as const
-type TabKey = (typeof tabs)[number]['key']
+type TabKey = (typeof allTabs)[number]['key']
+const tabs = allTabs.filter((t) => t.key !== 'processos' || auth.can('recruitment.view'))
 
 const tab = computed<TabKey>({
   get: () => (tabs.some((t) => t.key === route.query.aba) ? (route.query.aba as TabKey) : 'perfil'),
@@ -171,6 +174,7 @@ function changed() {
     </div>
 
     <CandidateProfile v-if="tab === 'perfil'" :candidate="candidate" />
+    <CandidateApplications v-else-if="tab === 'processos'" :candidate-id="candidate.id" />
     <CandidateDocuments v-else-if="tab === 'documentos'" v-model:documents="candidate.documents" :candidate="candidate" :types="options.document_types" @changed="changed" />
     <CandidateNotes v-else-if="tab === 'anotacoes'" v-model:notes="candidate.notes" :candidate="candidate" @changed="changed" />
     <CandidateHistory v-else :key="historyKey" :candidate-id="candidate.id" />

@@ -1,19 +1,21 @@
 <?php
 
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Auth\PasswordController;
 use App\Http\Controllers\Api\V1\Candidates\CandidateController;
 use App\Http\Controllers\Api\V1\Candidates\CandidateDocumentController;
 use App\Http\Controllers\Api\V1\Candidates\CandidateNoteController;
 use App\Http\Controllers\Api\V1\Candidates\SkillController;
 use App\Http\Controllers\Api\V1\Candidates\TagController;
 use App\Http\Controllers\Api\V1\Candidates\TalentPoolController;
-use App\Http\Controllers\Api\V1\Auth\AuthController;
-use App\Http\Controllers\Api\V1\Auth\PasswordController;
 use App\Http\Controllers\Api\V1\Identity\RoleController;
 use App\Http\Controllers\Api\V1\Identity\UserController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Organization\UnitController;
+use App\Http\Controllers\Api\V1\Recruitment\ApplicationController;
+use App\Http\Controllers\Api\V1\Recruitment\JobOpeningController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -76,6 +78,17 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::get('candidates/{candidate}/duplicates', [TalentPoolController::class, 'candidateDuplicates'])->name('candidates.duplicates.show');
             Route::post('candidates/{candidate}/duplicates/{other}/dismiss', [TalentPoolController::class, 'dismiss'])->name('candidates.duplicates.dismiss');
             Route::apiResource('tags', TagController::class)->except('show');
+
+            // Vagas e processos seletivos (Fase 6)
+            Route::get('jobs/options', [JobOpeningController::class, 'options'])->name('jobs.options');
+            Route::apiResource('jobs', JobOpeningController::class)->except('destroy');
+            Route::post('jobs/{job}/transition', [JobOpeningController::class, 'transition'])->name('jobs.transition');
+            Route::get('jobs/{job}/history', [JobOpeningController::class, 'history'])->name('jobs.history');
+            Route::get('jobs/{job}/applications', [ApplicationController::class, 'index'])->name('jobs.applications.index');
+            Route::post('jobs/{job}/applications', [ApplicationController::class, 'store'])->name('jobs.applications.store');
+            Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+            Route::post('applications/{application}/move', [ApplicationController::class, 'move'])->name('applications.move');
+            Route::get('candidates/{candidate}/applications', [ApplicationController::class, 'forCandidate'])->name('candidates.applications');
         });
     });
 });

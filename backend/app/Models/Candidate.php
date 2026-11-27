@@ -77,7 +77,7 @@ class Candidate extends Model
 
     /**
      * Restringe aos candidatos que o usuário pode ver.
-     * Gestor de departamento: candidatos das vagas do próprio departamento (Fase 6).
+     * Gestor de departamento: candidatos das vagas do próprio departamento.
      *
      * @param  Builder<self>  $query
      */
@@ -87,8 +87,8 @@ class Candidate extends Model
             return;
         }
 
-        // Sem inscrições em vagas ainda (Fase 6), não há candidatos no escopo do departamento.
-        $query->whereRaw('1 = 0');
+        // Gestor de departamento: só candidatos inscritos em vagas do próprio departamento.
+        $query->whereHas('applications.jobOpening', fn (Builder $q) => $q->where('department_id', $user->department_id ?? 0));
     }
 
     /** @return HasMany<CandidateEducation, $this> */
@@ -125,6 +125,12 @@ class Candidate extends Model
     public function favoritedBy(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'candidate_favorites')->withPivot('created_at');
+    }
+
+    /** @return HasMany<Application, $this> */
+    public function applications(): HasMany
+    {
+        return $this->hasMany(Application::class);
     }
 
     /** @return HasMany<CandidateDocument, $this> */
