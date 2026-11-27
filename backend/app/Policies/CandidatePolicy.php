@@ -9,9 +9,8 @@ use App\Models\User;
 /**
  * Acesso a candidatos.
  *
- * O gestor de departamento (candidates.view_department) verá apenas candidatos
- * inscritos em vagas do próprio departamento. As inscrições chegam na Fase 6;
- * até lá esse perfil não enxerga nenhum candidato (ver Candidate::scopeVisibleTo).
+ * O gestor de departamento (candidates.view_department) vê apenas candidatos
+ * inscritos em vagas do próprio departamento (ver Candidate::scopeVisibleTo).
  */
 class CandidatePolicy
 {

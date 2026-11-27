@@ -187,6 +187,8 @@ class CandidateController extends Controller
         'candidate.note_added' => 'Anotação registrada',
         'candidate.tags_changed' => 'Etiquetas alteradas',
         'candidate.duplicate_dismissed' => 'Duplicidade descartada',
+        'application.created' => 'Inscrito em vaga',
+        'application.moved' => 'Etapa do processo alterada',
     ];
 
     private function loadDetail(Candidate $candidate): Candidate
