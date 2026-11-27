@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { intelligenceApi } from '@/api/interviews'
 import { ref } from 'vue'
 import { candidatesApi, type Candidate, type CandidateDocument, type Option } from '@/api/candidates'
 import { parseApiError } from '@/api/http'
@@ -87,6 +88,24 @@ function icon(mime: string): string {
   if (mime.startsWith('image/')) return 'IMG'
   return 'DOC'
 }
+
+const readingLabel: Record<string, string> = {
+  pending: 'Lendo o currículo…',
+  done: 'Currículo lido: o texto entra na busca e gera sugestões no perfil.',
+  empty: 'Não foi encontrado texto legível no arquivo.',
+  unsupported: 'Formato sem leitura automática.',
+  failed: 'Não foi possível ler o arquivo.',
+}
+
+async function reread(d: CandidateDocument) {
+  try {
+    await intelligenceApi.reread(props.candidate.id, d.id)
+    d.extraction_status = 'pending'
+    toast.success('Leitura iniciada. As sugestões aparecem no Perfil em instantes.')
+  } catch (e) {
+    toast.error(parseApiError(e).message)
+  }
+}
 </script>
 
 <template>
@@ -102,6 +121,10 @@ function icon(mime: string): string {
           <div class="min-w-0 flex-1">
             <p class="truncate font-medium text-slate-900" :title="d.original_name">{{ d.original_name }}</p>
             <p class="text-xs text-slate-500">{{ d.type_label }} · {{ formatFileSize(d.size) }} · {{ formatDateTime(d.created_at) }}{{ d.uploaded_by ? ` · ${d.uploaded_by}` : '' }}</p>
+            <p v-if="d.extraction_status" class="text-xs" :class="d.extraction_status === 'done' ? 'text-emerald-700' : d.extraction_status === 'pending' ? 'text-sky-700' : 'text-amber-700'">
+              {{ readingLabel[d.extraction_status] }}<template v-if="d.extraction_method === 'ocr' && d.extraction_status === 'done'"> (por OCR)</template>
+              <button v-if="candidate.abilities.update && d.extraction_status !== 'pending'" type="button" class="ml-1 text-brand-700 hover:underline" @click="reread(d)">ler de novo</button>
+            </p>
           </div>
           <a v-if="candidate.abilities.download_documents" :href="candidatesApi.documentUrl(candidate.id, d.id)" class="rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50" @click="emit('changed')">Baixar</a>
           <BaseButton v-if="candidate.abilities.update" size="sm" variant="ghost" class="text-red-600" @click="removing = d">Remover</BaseButton>

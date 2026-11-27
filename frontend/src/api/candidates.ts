@@ -91,6 +91,8 @@ export interface CandidateDocument {
   size: number
   uploaded_by?: string | null
   created_at: string
+  extraction_status?: 'pending' | 'done' | 'empty' | 'unsupported' | 'failed' | null
+  extraction_method?: string | null
 }
 
 export interface CandidateNote {

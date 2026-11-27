@@ -21,6 +21,9 @@ class CandidateDocumentResource extends JsonResource
             'size' => $this->size,
             'uploaded_by' => $this->whenLoaded('uploader', fn () => $this->uploader?->name),
             'created_at' => $this->created_at?->toIso8601String(),
+            // Leitura automática (Fase 7.9): pending, done, empty, unsupported, failed.
+            'extraction_status' => $this->extraction_status,
+            'extraction_method' => $this->extraction_method,
         ];
     }
 }

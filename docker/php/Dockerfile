@@ -21,6 +21,8 @@ FROM ${COMPOSER_IMAGE} AS composer
 # -----------------------------------------------------------------------------
 FROM ${UBUNTU_IMAGE} AS base
 
+# poppler-utils (pdftotext/pdftoppm) e tesseract-ocr (+ português): leitura de
+# currículos em PDF e OCR de digitalizações (Fase 7.9, executados na fila).
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=America/Manaus \
     PHP_VERSION=8.3 \
@@ -36,6 +38,7 @@ RUN apt-get update \
         php8.3-pgsql php8.3-redis \
         php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip \
         php8.3-intl php8.3-bcmath php8.3-gd php8.3-opcache php8.3-readline \
+        poppler-utils tesseract-ocr tesseract-ocr-por \
     && apt-get purge -y --auto-remove \
     && rm -rf /var/lib/apt/lists/* /etc/php/8.3/fpm/pool.d/*
 

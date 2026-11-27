@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\V1\Candidates\SkillController;
 use App\Http\Controllers\Api\V1\Candidates\TagController;
 use App\Http\Controllers\Api\V1\Candidates\TalentPoolController;
 use App\Http\Controllers\Api\V1\Identity\RoleController;
+use App\Http\Controllers\Api\V1\Intelligence\SuggestionController;
+use App\Http\Controllers\Api\V1\Interviews\EvaluationCriterionController;
+use App\Http\Controllers\Api\V1\Interviews\InterviewController;
 use App\Http\Controllers\Api\V1\Identity\UserController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
@@ -89,6 +92,26 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
             Route::post('applications/{application}/move', [ApplicationController::class, 'move'])->name('applications.move');
             Route::get('candidates/{candidate}/applications', [ApplicationController::class, 'forCandidate'])->name('candidates.applications');
+
+            // Entrevistas e avaliações (Fase 7)
+            Route::get('interviews/options', [InterviewController::class, 'options'])->name('interviews.options');
+            Route::get('interviews', [InterviewController::class, 'index'])->name('interviews.index');
+            Route::get('interviews/{interview}', [InterviewController::class, 'show'])->name('interviews.show');
+            Route::put('interviews/{interview}', [InterviewController::class, 'update'])->name('interviews.update');
+            Route::post('interviews/{interview}/cancel', [InterviewController::class, 'cancel'])->name('interviews.cancel');
+            Route::post('interviews/{interview}/no-show', [InterviewController::class, 'noShow'])->name('interviews.no_show');
+            Route::put('interviews/{interview}/evaluation', [InterviewController::class, 'evaluate'])->name('interviews.evaluate');
+            Route::get('interviews/{interview}/history', [InterviewController::class, 'history'])->name('interviews.history');
+            Route::get('applications/{application}/interviews', [InterviewController::class, 'forApplication'])->name('applications.interviews');
+            Route::post('applications/{application}/interviews', [InterviewController::class, 'store'])->name('applications.interviews.store');
+
+            // Base de IA (Fase 7.9): sugestões sempre revisadas por uma pessoa
+            Route::get('candidates/{candidate}/suggestions', [SuggestionController::class, 'index'])->name('candidates.suggestions.index');
+            Route::post('candidates/{candidate}/suggestions/{suggestion}/accept', [SuggestionController::class, 'accept'])->name('candidates.suggestions.accept');
+            Route::post('candidates/{candidate}/suggestions/{suggestion}/dismiss', [SuggestionController::class, 'dismiss'])->name('candidates.suggestions.dismiss');
+            Route::post('candidates/{candidate}/documents/{document}/read', [SuggestionController::class, 'reread'])->name('candidates.documents.read');
+            Route::get('applications/{application}/match', [SuggestionController::class, 'match'])->name('applications.match');
+            Route::apiResource('evaluation-criteria', EvaluationCriterionController::class)->except('show')->parameters(['evaluation-criteria' => 'criterion']);
         });
     });
 });

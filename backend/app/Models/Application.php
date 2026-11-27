@@ -46,6 +46,12 @@ class Application extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return HasMany<Interview, $this> */
+    public function interviews(): HasMany
+    {
+        return $this->hasMany(Interview::class)->orderBy('scheduled_at');
+    }
+
     /** @return HasMany<ApplicationStageHistory, $this> */
     public function history(): HasMany
     {

@@ -289,8 +289,8 @@ DOCX, OCR com Tesseract) executadas na fila. A IA **apenas sugere** (competênci
 | 4 | Cadastro de candidatos | ✅ concluída | CRUD completo com anexos privados, histórico e testes |
 | 5 | Banco de currículos | ✅ concluída | busca avançada, filtros, favoritos, etiquetas, duplicidades |
 | 6 | Vagas e processos seletivos | ✅ concluída | ciclo da vaga, Kanban, histórico de movimentações |
-| 7 | Entrevistas e avaliações | ⏳ próxima | agenda, critérios, pareceres; base de IA (7.9) |
-| 8 | Dashboard e relatórios | pendente | indicadores reais, exportação PDF/XLSX/CSV |
+| 7 | Entrevistas e avaliações | ✅ concluída | agenda, critérios, pareceres; base de IA (7.9) |
+| 8 | Dashboard e relatórios | ⏳ próxima | indicadores reais, exportação PDF/XLSX/CSV |
 | 9 | Portal público | pendente | trabalhe conosco, candidatura, consentimento, confirmação |
 | 10 | LGPD e auditoria | pendente | retenção, direitos do titular, trilha de auditoria completa |
 | 11 | Testes e homologação | pendente | suíte completa aprovada, testes de segurança e de restauração |

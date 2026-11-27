@@ -66,8 +66,25 @@ return new class extends Migration
         });
         DB::statement('ALTER TABLE candidate_duplicate_dismissals ADD CONSTRAINT candidate_duplicate_dismissals_order CHECK (candidate_id < other_candidate_id)');
 
-        // Indexa os candidatos já cadastrados.
-        DB::statement(App\Domain\Candidates\Search\CandidateSearchIndex::SQL.' WHERE TRUE');
+        // Indexa os candidatos já cadastrados. O SQL fica copiado aqui (como era nesta fase)
+        // porque o índice evolui em fases seguintes, com colunas criadas depois desta migration.
+        DB::statement(<<<'SQL'
+        UPDATE candidates c SET search_vector =
+            setweight(to_tsvector('portuguese', unaccent(concat_ws(' ', c.full_name, c.social_name, c.desired_position))), 'A')
+            || setweight(to_tsvector('portuguese', unaccent(concat_ws(' ',
+                (SELECT string_agg(s.name, ' ') FROM candidate_skill cs JOIN skills s ON s.id = cs.skill_id WHERE cs.candidate_id = c.id),
+                (SELECT string_agg(x.job_title, ' ') FROM candidate_experiences x WHERE x.candidate_id = c.id),
+                (SELECT string_agg(t.name, ' ') FROM candidate_tag ct JOIN tags t ON t.id = ct.tag_id WHERE ct.candidate_id = c.id)
+            ))), 'B')
+            || setweight(to_tsvector('portuguese', unaccent(concat_ws(' ',
+                c.summary,
+                (SELECT string_agg(concat_ws(' ', x.company, x.description), ' ') FROM candidate_experiences x WHERE x.candidate_id = c.id),
+                (SELECT string_agg(concat_ws(' ', e.course, e.institution), ' ') FROM candidate_educations e WHERE e.candidate_id = c.id),
+                (SELECT string_agg(concat_ws(' ', k.name, k.institution, k.credential), ' ') FROM candidate_courses k WHERE k.candidate_id = c.id)
+            ))), 'C')
+            || setweight(to_tsvector('portuguese', unaccent(concat_ws(' ', c.city, c.neighborhood))), 'D')
+        WHERE TRUE
+        SQL);
     }
 
     public function down(): void

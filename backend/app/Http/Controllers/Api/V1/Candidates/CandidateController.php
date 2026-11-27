@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Candidates;
 
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Candidates\Actions\SaveCandidate;
-use App\Domain\Candidates\Search\CandidateSearch;
 use App\Domain\Candidates\Enums\Availability;
 use App\Domain\Candidates\Enums\CandidateSource;
 use App\Domain\Candidates\Enums\CandidateStatus;
@@ -15,6 +14,7 @@ use App\Domain\Candidates\Enums\EducationStatus;
 use App\Domain\Candidates\Enums\ProfessionalArea;
 use App\Domain\Candidates\Enums\SkillLevel;
 use App\Domain\Candidates\Enums\WorkShift;
+use App\Domain\Candidates\Search\CandidateSearch;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Candidates\CandidateRequest;
 use App\Http\Requests\Organization\UnitRequest;
@@ -189,6 +189,13 @@ class CandidateController extends Controller
         'candidate.duplicate_dismissed' => 'Duplicidade descartada',
         'application.created' => 'Inscrito em vaga',
         'application.moved' => 'Etapa do processo alterada',
+        'interview.scheduled' => 'Entrevista agendada',
+        'interview.rescheduled' => 'Entrevista remarcada',
+        'interview.cancelled' => 'Entrevista cancelada',
+        'interview.no_show' => 'Não compareceu à entrevista',
+        'interview.evaluated' => 'Parecer de entrevista',
+        'candidate.suggestion_reviewed' => 'Sugestão automática revisada',
+        'candidate.document_read' => 'Currículo lido automaticamente',
     ];
 
     private function loadDetail(Candidate $candidate): Candidate

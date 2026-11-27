@@ -10,13 +10,16 @@ use App\Models\User;
  * Acesso a candidatos.
  *
  * O gestor de departamento (candidates.view_department) vê apenas candidatos
- * inscritos em vagas do próprio departamento (ver Candidate::scopeVisibleTo).
+ * inscritos em vagas do próprio departamento, e o entrevistador só os candidatos
+ * que entrevista (ver Candidate::scopeVisibleTo).
  */
 class CandidatePolicy
 {
     public function viewAny(User $actor): bool
     {
-        return $actor->can(Permission::CandidatesView->value) || $actor->can(Permission::CandidatesViewDepartment->value);
+        return $actor->can(Permission::CandidatesView->value)
+            || $actor->can(Permission::CandidatesViewDepartment->value)
+            || $actor->can(Permission::InterviewsView->value);
     }
 
     public function view(User $actor, Candidate $candidate): bool
@@ -25,7 +28,7 @@ class CandidatePolicy
             return true;
         }
 
-        return $actor->can(Permission::CandidatesViewDepartment->value)
+        return $this->viewAny($actor)
             && Candidate::query()->visibleTo($actor)->whereKey($candidate->getKey())->exists();
     }
 
@@ -46,7 +49,9 @@ class CandidatePolicy
 
     public function downloadDocuments(User $actor, Candidate $candidate): bool
     {
-        return $actor->can(Permission::CandidatesDownloadDocuments->value) && $this->view($actor, $candidate);
+        // Entrevistadores podem baixar o currículo de quem entrevistam.
+        return ($actor->can(Permission::CandidatesDownloadDocuments->value) || $actor->can(Permission::InterviewsEvaluate->value))
+            && $this->view($actor, $candidate);
     }
 
     /** Favoritos e etiquetas. */
